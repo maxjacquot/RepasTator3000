@@ -7,8 +7,12 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import type { Recipe, Ingredient } from './types';
+import type { Recipe } from './types';
 import { colors, typography, spacing, radii, shadows } from './theme';
+import { RepeatButton } from './RepeatButton';
+import { parseStoredIngredients } from './ingredients';
+
+export { parseStoredIngredients };
 
 // ─── Helpers ingrédients ──────────────────────────────────────
 
@@ -22,15 +26,6 @@ export type IngredientLine = {
   currentQty: number;
   included: boolean;
 };
-
-export function parseStoredIngredients(stored: string): Ingredient[] {
-  if (!stored) return [];
-  try {
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed)) return parsed as Ingredient[];
-  } catch { /* ignore */ }
-  return stored.split('\n').filter(Boolean).map((line) => ({ qty: null, unit: '', name: line }));
-}
 
 export function parseIngredients(stored: string, factor: number): IngredientLine[] {
   return parseStoredIngredients(stored).map((ing, id) => {
@@ -92,7 +87,8 @@ interface IngredientsAdjustModalProps {
   visible: boolean;
   recipe: Recipe;
   lines: IngredientLine[];
-  totalSlots: number;
+  /** Nombre total de convives couverts par cet ajout aux courses */
+  totalPeople: number;
   onClose: () => void;
   onAdd: (lines: IngredientLine[]) => void;
   onNeedNothing: () => void;
@@ -100,13 +96,13 @@ interface IngredientsAdjustModalProps {
 }
 
 export function IngredientsAdjustModal({
-  visible, recipe, lines, totalSlots, onClose, onAdd, onNeedNothing, onLinesChange,
+  visible, recipe, lines, totalPeople, onClose, onAdd, onNeedNothing, onLinesChange,
 }: IngredientsAdjustModalProps) {
   function adjustQty(id: number, delta: number) {
     onLinesChange(lines.map((l) => {
       if (l.id !== id || l.qty === null) return l;
-      const step = getStep(l.qty * totalSlots);
-      const next = Math.max(0, l.currentQty + delta * step);
+      const step = getStep(l.qty * totalPeople);
+      const next = Math.max(0, Math.round((l.currentQty + delta * step) * 100) / 100);
       return { ...l, currentQty: next };
     }));
   }
@@ -134,14 +130,10 @@ export function IngredientsAdjustModal({
           </TouchableOpacity>
         </View>
 
-        {totalSlots > 1 && (
-          <Text style={s.hint}>
-            Quantités calculées pour {totalSlots} créneaux. Ajuste si tu en as déjà certains.
-          </Text>
-        )}
-        {totalSlots === 1 && (
-          <Text style={s.hint}>Ajuste les quantités si tu en as déjà certains à la maison.</Text>
-        )}
+        <Text style={s.hint}>
+          Quantités calculées pour {totalPeople} personne{totalPeople > 1 ? 's' : ''}.
+          {' '}Ajuste si tu en as déjà à la maison — reste appuyé sur − ou + pour aller vite.
+        </Text>
 
         <FlatList
           data={lines}
@@ -156,18 +148,18 @@ export function IngredientsAdjustModal({
                 </Text>
                 {item.qty !== null ? (
                   <View style={s.stepper}>
-                    <TouchableOpacity style={[s.stepBtn, s.stepBtnMinus]} onPress={() => adjustQty(item.id, -1)} activeOpacity={0.7}>
+                    <RepeatButton style={[s.stepBtn, s.stepBtnMinus]} onPress={(mult) => adjustQty(item.id, -mult)}>
                       <Text style={s.stepBtnText}>−</Text>
-                    </TouchableOpacity>
+                    </RepeatButton>
                     <View style={s.stepValue}>
                       <Text style={[s.stepValueText, isZero && s.stepValueZero]}>
                         {formatQty(item.currentQty)}
                         {item.unit ? <Text style={s.stepUnit}> {item.unit}</Text> : null}
                       </Text>
                     </View>
-                    <TouchableOpacity style={[s.stepBtn, s.stepBtnPlus]} onPress={() => adjustQty(item.id, 1)} activeOpacity={0.7}>
+                    <RepeatButton style={[s.stepBtn, s.stepBtnPlus]} onPress={(mult) => adjustQty(item.id, mult)}>
                       <Text style={s.stepBtnText}>+</Text>
-                    </TouchableOpacity>
+                    </RepeatButton>
                   </View>
                 ) : (
                   <TouchableOpacity

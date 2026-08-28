@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAllRecipes, type Recipe } from '../database';
 import { colors, fonts, typography, spacing, radii, shadows, Badge } from '../theme';
 import { ImportModal } from '../ImportModal';
+import { searchRecipes } from '../recipeSearch';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -43,7 +44,7 @@ function getBadge(recipe: Recipe): { label: string; color: string } {
 
 // ─── Carte recette ────────────────────────────────────────────
 
-function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }) {
+function RecipeCard({ recipe, ingredientHits, onPress }: { recipe: Recipe; ingredientHits: string[]; onPress: () => void }) {
   const emoji = CATEGORY_EMOJI[recipe.category] ?? '🍴';
   const emojiBg = EMOJI_BG[recipe.category] ?? colors.primaryLight;
   const accent = CATEGORY_ACCENT[recipe.category] ?? colors.primary;
@@ -68,6 +69,11 @@ function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }
           )}
         </View>
         <Badge label={badge.label} color={badge.color} style={s.badge} />
+        {ingredientHits.length > 0 && (
+          <Text style={s.cardHits} numberOfLines={1}>
+            🧺 contient : {ingredientHits.join(', ')}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -93,11 +99,9 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
     if (isFocused) setRecipes(getAllRecipes());
   }, [isFocused, focusKey]);
 
-  const filtered = recipes.filter((r) => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase());
-    const matchCat = activeCategory === 'Toutes' || r.category === activeCategory;
-    return matchSearch && matchCat;
-  });
+  const filtered = searchRecipes(recipes, search).filter(
+    ({ recipe }) => activeCategory === 'Toutes' || recipe.category === activeCategory
+  );
 
   return (
     <View style={[s.root, { width }]} pointerEvents={isFocused ? 'auto' : 'none'}>
@@ -128,7 +132,7 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
       <View style={s.searchContainer}>
         <TextInput
           style={s.searchInput}
-          placeholder="Rechercher une recette..."
+          placeholder="Rechercher un plat, un ingrédient..."
           placeholderTextColor={colors.textSecondary}
           value={search}
           onChangeText={setSearch}
@@ -154,14 +158,15 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
       {/* Liste */}
       <FlatList
         data={filtered}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item) => String(item.recipe.id)}
         contentContainerStyle={s.list}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={<Text style={s.emptyText}>Aucune recette trouvée.</Text>}
         renderItem={({ item }) => (
           <RecipeCard
-            recipe={item}
-            onPress={() => router.push(`/recipe/${item.id}`)}
+            recipe={item.recipe}
+            ingredientHits={item.ingredientHits}
+            onPress={() => router.push(`/recipe/${item.recipe.id}`)}
           />
         )}
       />
@@ -210,6 +215,12 @@ const s = StyleSheet.create({
     fontSize: typography.fontSizes.sm,
     fontWeight: typography.fontWeights.semiBold,
     letterSpacing: 0.2,
+  },
+  cardHits: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSizes.xs,
+    color: colors.primary,
+    fontWeight: typography.fontWeights.semiBold,
   },
   searchContainer: {
     paddingHorizontal: spacing.lg,

@@ -34,6 +34,16 @@ export type ShoppingItem = {
 
 export type MealSlot = 'lunch' | 'dinner' | 'lunch_side' | 'dinner_side' | 'lunch_side2' | 'dinner_side2';
 
+/** Créneau parent : le nombre de personnes est défini par repas, pas par plat */
+export type MealKey = 'lunch' | 'dinner';
+
+/** Nombre de personnes proposé par défaut sur un nouveau créneau */
+export const DEFAULT_PEOPLE = 2;
+
+export function mealKeyOf(slot: MealSlot): MealKey {
+  return slot.startsWith('lunch') ? 'lunch' : 'dinner';
+}
+
 export type MealPlan = {
   date: string;
   lunch: number | null;
@@ -42,6 +52,8 @@ export type MealPlan = {
   dinner_side: number | null;
   lunch_side2: number | null;
   dinner_side2: number | null;
+  lunch_people: number;
+  dinner_people: number;
 };
 
 // ─── Maison ───────────────────────────────────────────────────

@@ -33,7 +33,7 @@ Génère un tableau JSON en respectant exactement ce format :
     "tags": ["végétarien", "rapide"],
     "ingredients": [
       { "qty": 200, "unit": "g", "name": "farine" },
-      { "qty": 1, "unit": "L", "name": "eau" },
+      { "qty": 1000, "unit": "ml", "name": "eau" },
       { "qty": 2, "unit": "unités", "name": "œufs" },
       { "qty": 1, "unit": "c. à café", "name": "cumin en poudre" },
       { "qty": 2, "unit": "c. à soupe", "name": "huile d'olive" }
@@ -62,10 +62,17 @@ Règles pour les ingrédients :
 - Chaque ingrédient est un objet { "qty", "unit", "name" }
 - "name" : nom seul, sans quantité ni unité
 - "qty" : nombre (entier ou décimal), ou null si pas de quantité mesurable
-- "unit" : choisir selon le type d'ingrédient :
-  → Achetables au poids/volume : "g", "kg", "ml", "cl", "L"
-  → Achetables à la pièce : "unité" (singulier) ou "unités" (pluriel)
+- "unit" : UNIQUEMENT une de ces valeurs, choisie selon le type d'ingrédient :
+  → Tout ce qui se pèse (farine, légumes, viande, fromage, pâtes, riz…) : TOUJOURS "g", jamais "kg"
+    Convertis systématiquement : 1 kg de farine → { "qty": 1000, "unit": "g" }, 1,5 kg → 1500
+  → Tout ce qui se mesure en liquide (eau, lait, crème, huile en grande quantité…) : TOUJOURS "ml", jamais "cl" ni "L"
+    Convertis systématiquement : 1 L d'eau → { "qty": 1000, "unit": "ml" }, 20 cl de crème → 200
+  → Achetables à la pièce (œufs, citrons, oignons…) : "unité" (singulier) ou "unités" (pluriel)
   → Épices et condiments (achetés en flacon) : garder la mesure recette ("c. à café", "c. à soupe", "pincée") — l'app les affichera sans quantité dans la liste de courses
+- N'invente pas d'autre unité : pas de "gousse", "botte", "tranche", "sachet", "boîte", "verre". Convertis en g, en ml, ou en unités.
+  Exemples : 2 gousses d'ail → { "qty": 2, "unit": "unités", "name": "gousse d'ail" } ; 1 botte de persil → { "qty": 30, "unit": "g", "name": "persil" }
+- "name" doit rester constant d'une recette à l'autre pour un même produit : nom simple et au singulier, sans qualificatif de taille ni de préparation
+  Écris "courgette", pas "courgettes moyennes" ni "courgette émincée" — l'app additionne les quantités des ingrédients portant le même nom
 - NE PAS inclure sel, poivre, et condiments toujours présents en cuisine — ils sont sous-entendus
 
 Règles pour les étapes (steps) :

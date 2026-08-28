@@ -4,11 +4,13 @@ import { parseImportJson, type ImportResult } from './data/importRecipes';
 export type { ImportResult };
 
 // ─── Re-exports des types ──────────────────────────────────────
-export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealPlan, Room, RoomProject, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem, SportSession } from './types';
+export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomProject, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem, SportSession } from './types';
+export { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 // ─── Init ─────────────────────────────────────────────────────
 
-import type { Recipe, ShoppingItem, MealPlan, MealSlot, RoomTaskPriority } from './types';
+import type { Recipe, ShoppingItem, MealPlan, MealSlot, MealKey, RoomTaskPriority } from './types';
+import { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 const STORAGE_KEY = 'cuisinator_recipes';
 const MEAL_PLANS_KEY = 'cuisinator_meal_plans';
@@ -92,7 +94,7 @@ export function deleteRecipe(id: number): void {
 
 // ─── Meal Plan ────────────────────────────────────────────────
 
-type MealPlansStore = Record<string, { lunch: number | null; dinner: number | null; lunch_side: number | null; dinner_side: number | null; lunch_side2: number | null; dinner_side2: number | null }>;
+type MealPlansStore = Record<string, { lunch: number | null; dinner: number | null; lunch_side: number | null; dinner_side: number | null; lunch_side2: number | null; dinner_side2: number | null; lunch_people?: number; dinner_people?: number }>;
 
 function loadMealPlans(): MealPlansStore {
   try {
@@ -110,13 +112,34 @@ function saveMealPlans(plans: MealPlansStore): void {
 export function getMealPlan(date: string): MealPlan {
   const plans = loadMealPlans();
   const plan = plans[date];
-  return { date, lunch: plan?.lunch ?? null, dinner: plan?.dinner ?? null, lunch_side: plan?.lunch_side ?? null, dinner_side: plan?.dinner_side ?? null, lunch_side2: plan?.lunch_side2 ?? null, dinner_side2: plan?.dinner_side2 ?? null };
+  return {
+    date,
+    lunch: plan?.lunch ?? null,
+    dinner: plan?.dinner ?? null,
+    lunch_side: plan?.lunch_side ?? null,
+    dinner_side: plan?.dinner_side ?? null,
+    lunch_side2: plan?.lunch_side2 ?? null,
+    dinner_side2: plan?.dinner_side2 ?? null,
+    lunch_people: plan?.lunch_people ?? DEFAULT_PEOPLE,
+    dinner_people: plan?.dinner_people ?? DEFAULT_PEOPLE,
+  };
 }
 
-export function setMeal(date: string, slot: MealSlot, recipeId: number | null): void {
+/** @param people nombre de convives du créneau parent (midi / soir), optionnel */
+export function setMeal(date: string, slot: MealSlot, recipeId: number | null, people?: number): void {
   const plans = loadMealPlans();
   const current = plans[date] ?? { lunch: null, dinner: null, lunch_side: null, dinner_side: null, lunch_side2: null, dinner_side2: null };
   plans[date] = { ...current, [slot]: recipeId };
+  if (people !== undefined) {
+    plans[date][mealKeyOf(slot) === 'lunch' ? 'lunch_people' : 'dinner_people'] = people;
+  }
+  saveMealPlans(plans);
+}
+
+export function setMealPeople(date: string, mealKey: MealKey, people: number): void {
+  const plans = loadMealPlans();
+  const current = plans[date] ?? { lunch: null, dinner: null, lunch_side: null, dinner_side: null, lunch_side2: null, dinner_side2: null };
+  plans[date] = { ...current, [mealKey === 'lunch' ? 'lunch_people' : 'dinner_people']: people };
   saveMealPlans(plans);
 }
 
@@ -157,6 +180,12 @@ export function toggleShoppingItem(id: number): void {
       item.id === id ? { ...item, done: item.done === 1 ? 0 : 1 } : item
     )
   );
+}
+
+/** Coche/décoche d'un coup tous les articles fusionnés dans une même ligne */
+export function setShoppingItemsDone(ids: number[], done: boolean): void {
+  const list = loadShopping();
+  saveShopping(list.map((i) => (ids.includes(i.id) ? { ...i, done: done ? 1 : 0 } : i)));
 }
 
 export function clearShoppingList(): void {

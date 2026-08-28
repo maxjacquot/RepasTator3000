@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getShoppingList,
-  toggleShoppingItem,
+  setShoppingItemsDone,
   clearShoppingList,
   deleteShoppingItemsByIds,
   addToShoppingList,
@@ -22,6 +22,7 @@ import {
 import type { ShoppingItem } from '../database';
 import { colors, fonts, typography, spacing, radii, shadows } from '../theme';
 import { useAppAlert } from '../AppAlert';
+import { aggregateShoppingItems, type ShoppingRow } from '../shoppingAggregate';
 
 // ─── Rayons supermarché ───────────────────────────────────────
 
@@ -215,8 +216,9 @@ function getRayon(name: string): string {
 
 // ─── Groupement ───────────────────────────────────────────────
 
-type Group = { title: string; emoji: string; items: ShoppingItem[] };
+type Group = { title: string; emoji: string; rows: ShoppingRow[] };
 
+/** Par recette : le détail reste lisible recette par recette */
 function groupByRecipe(items: ShoppingItem[]): Group[] {
   const map = new Map<string, ShoppingItem[]>();
   for (const item of items) {
@@ -224,24 +226,29 @@ function groupByRecipe(items: ShoppingItem[]): Group[] {
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(item);
   }
-  return Array.from(map.entries()).map(([title, items]) => ({ title, emoji: '🍽️', items }));
+  return Array.from(map.entries()).map(([title, groupItems]) => ({
+    title,
+    emoji: '🍽️',
+    rows: aggregateShoppingItems(groupItems),
+  }));
 }
 
+/** Par rayon : les mêmes ingrédients issus de recettes différentes sont totalisés */
 function groupByRayon(items: ShoppingItem[]): Group[] {
-  const map = new Map<string, ShoppingItem[]>();
-  for (const item of items) {
-    const key = getRayon(item.name);
+  const map = new Map<string, ShoppingRow[]>();
+  for (const row of aggregateShoppingItems(items)) {
+    const key = getRayon(row.label);
     if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(item);
+    map.get(key)!.push(row);
   }
   const ordered: Group[] = [];
   for (const rayon of RAYONS) {
     if (map.has(rayon.label)) {
-      ordered.push({ title: rayon.label, emoji: rayon.emoji, items: map.get(rayon.label)! });
+      ordered.push({ title: rayon.label, emoji: rayon.emoji, rows: map.get(rayon.label)! });
     }
   }
   if (map.has(RAYON_AUTRE.label)) {
-    ordered.push({ title: RAYON_AUTRE.label, emoji: RAYON_AUTRE.emoji, items: map.get(RAYON_AUTRE.label)! });
+    ordered.push({ title: RAYON_AUTRE.label, emoji: RAYON_AUTRE.emoji, rows: map.get(RAYON_AUTRE.label)! });
   }
   return ordered;
 }
@@ -269,8 +276,8 @@ export function CoursesPanel({ width, isFocused, focusKey }: CoursesPanelProps) 
     if (isFocused) setItems(getShoppingList());
   }, [isFocused, focusKey]);
 
-  function handleToggle(id: number) {
-    toggleShoppingItem(id);
+  function handleToggle(row: ShoppingRow) {
+    setShoppingItemsDone(row.ids, !row.done);
     setItems(getShoppingList());
   }
 
@@ -301,8 +308,8 @@ export function CoursesPanel({ width, isFocused, focusKey }: CoursesPanelProps) 
     });
   }
 
-  function handleDeleteGroup(groupItems: ShoppingItem[]) {
-    deleteShoppingItemsByIds(groupItems.map((i) => i.id));
+  function handleDeleteGroup(rows: ShoppingRow[]) {
+    deleteShoppingItemsByIds(rows.flatMap((r) => r.ids));
     setItems(getShoppingList());
   }
 
@@ -367,7 +374,7 @@ export function CoursesPanel({ width, isFocused, focusKey }: CoursesPanelProps) 
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
           renderItem={({ item: group }) => {
-            const allDone = group.items.every((i) => i.done === 1);
+            const allDone = group.rows.every((r) => r.done);
             return (
               <View style={[s.group, allDone && s.groupDone]}>
                 <View style={s.groupHeader}>
@@ -376,36 +383,43 @@ export function CoursesPanel({ width, isFocused, focusKey }: CoursesPanelProps) 
                   {allDone ? (
                     <TouchableOpacity
                       style={s.groupDeleteBtn}
-                      onPress={() => handleDeleteGroup(group.items)}
+                      onPress={() => handleDeleteGroup(group.rows)}
                       activeOpacity={0.7}
                     >
                       <Ionicons name="trash-outline" size={14} color="#DC2626" />
                       <Text style={s.groupDeleteText}>Supprimer</Text>
                     </TouchableOpacity>
                   ) : (
-                    <Text style={s.groupCount}>{group.items.length}</Text>
+                    <Text style={s.groupCount}>{group.rows.length}</Text>
                   )}
                 </View>
 
                 <View style={s.groupItems}>
-                  {group.items.map((item) => (
+                  {group.rows.map((row) => (
                     <TouchableOpacity
-                      key={item.id}
+                      key={row.key}
                       style={s.item}
-                      onPress={() => handleToggle(item.id)}
+                      onPress={() => handleToggle(row)}
                       activeOpacity={0.7}
                     >
-                      <View style={[s.checkbox, item.done === 1 && s.checkboxDone]}>
-                        {item.done === 1 && <Text style={s.checkmark}>✓</Text>}
+                      <View style={[s.checkbox, row.done && s.checkboxDone]}>
+                        {row.done && <Text style={s.checkmark}>✓</Text>}
                       </View>
                       <View style={s.itemBody}>
-                        <Text style={[s.itemName, item.done === 1 && s.itemNameDone]}>
-                          {item.name}
+                        <Text style={[s.itemName, row.done && s.itemNameDone]}>
+                          {row.label}
                         </Text>
-                        {viewMode === 'rayon' && item.recipe_name ? (
-                          <Text style={s.itemRecipe}>{item.recipe_name}</Text>
+                        {viewMode === 'rayon' && row.sources.length > 0 ? (
+                          <Text style={s.itemRecipe} numberOfLines={1}>
+                            {row.sources.join(' · ')}
+                          </Text>
                         ) : null}
                       </View>
+                      {row.amount ? (
+                        <Text style={[s.itemQty, row.done && s.itemQtyDone]}>{row.amount}</Text>
+                      ) : row.ids.length > 1 ? (
+                        <Text style={[s.itemQty, row.done && s.itemQtyDone]}>×{row.ids.length}</Text>
+                      ) : null}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -636,6 +650,16 @@ const s = StyleSheet.create({
     fontSize: typography.fontSizes.xs,
     color: colors.textSecondary,
     marginTop: 1,
+  },
+  itemQty: {
+    fontSize: typography.fontSizes.md,
+    fontWeight: typography.fontWeights.extraBold,
+    color: colors.primary,
+    flexShrink: 0,
+  },
+  itemQtyDone: {
+    color: colors.textSecondary,
+    textDecorationLine: 'line-through',
   },
   emptyState: {
     flex: 1,

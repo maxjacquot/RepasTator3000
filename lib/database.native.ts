@@ -3,7 +3,8 @@ import { SEED_RECIPES, toDbFormat } from './data/recipes';
 export type { ImportResult } from './data/importRecipes';
 
 // ─── Re-exports des types ──────────────────────────────────────
-export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealPlan, Room, RoomProject, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem, SportSession } from './types';
+export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomProject, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem, SportSession } from './types';
+export { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 // ─── Init ─────────────────────────────────────────────────────
 
@@ -97,6 +98,8 @@ export function initDatabase() {
     `ALTER TABLE meal_plans ADD COLUMN dinner_side_id INTEGER;`,
     `ALTER TABLE meal_plans ADD COLUMN lunch_side2_id INTEGER;`,
     `ALTER TABLE meal_plans ADD COLUMN dinner_side2_id INTEGER;`,
+    `ALTER TABLE meal_plans ADD COLUMN lunch_people INTEGER NOT NULL DEFAULT 2;`,
+    `ALTER TABLE meal_plans ADD COLUMN dinner_people INTEGER NOT NULL DEFAULT 2;`,
     `ALTER TABLE room_tasks ADD COLUMN shopping_items TEXT NOT NULL DEFAULT '[]';`,
     `ALTER TABLE room_tasks ADD COLUMN project_id INTEGER;`,
   ]) {
@@ -195,7 +198,8 @@ export function deleteRecipe(id: number): void {
 
 // ─── Meal Plan ────────────────────────────────────────────────
 
-import type { MealPlan, MealSlot } from './types';
+import type { MealPlan, MealSlot, MealKey } from './types';
+import { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 export function getMealPlan(date: string): MealPlan {
   const row = db.getFirstSync<{
@@ -205,6 +209,8 @@ export function getMealPlan(date: string): MealPlan {
     dinner_side_id: number | null;
     lunch_side2_id: number | null;
     dinner_side2_id: number | null;
+    lunch_people: number | null;
+    dinner_people: number | null;
   }>('SELECT * FROM meal_plans WHERE date = ?;', [date]);
   return {
     date,
@@ -214,13 +220,17 @@ export function getMealPlan(date: string): MealPlan {
     dinner_side: row?.dinner_side_id ?? null,
     lunch_side2: row?.lunch_side2_id ?? null,
     dinner_side2: row?.dinner_side2_id ?? null,
+    lunch_people: row?.lunch_people ?? DEFAULT_PEOPLE,
+    dinner_people: row?.dinner_people ?? DEFAULT_PEOPLE,
   };
 }
 
-export function setMeal(date: string, slot: MealSlot, recipeId: number | null): void {
+/** @param people nombre de convives du créneau parent (midi / soir), optionnel */
+export function setMeal(date: string, slot: MealSlot, recipeId: number | null, people?: number): void {
   const current = getMealPlan(date);
+  const mealKey = mealKeyOf(slot);
   db.runSync(
-    'INSERT OR REPLACE INTO meal_plans (date, lunch_id, dinner_id, lunch_side_id, dinner_side_id, lunch_side2_id, dinner_side2_id) VALUES (?, ?, ?, ?, ?, ?, ?);',
+    'INSERT OR REPLACE INTO meal_plans (date, lunch_id, dinner_id, lunch_side_id, dinner_side_id, lunch_side2_id, dinner_side2_id, lunch_people, dinner_people) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
     [
       date,
       slot === 'lunch' ? recipeId : current.lunch,
@@ -229,6 +239,23 @@ export function setMeal(date: string, slot: MealSlot, recipeId: number | null): 
       slot === 'dinner_side' ? recipeId : current.dinner_side,
       slot === 'lunch_side2' ? recipeId : current.lunch_side2,
       slot === 'dinner_side2' ? recipeId : current.dinner_side2,
+      people !== undefined && mealKey === 'lunch' ? people : current.lunch_people,
+      people !== undefined && mealKey === 'dinner' ? people : current.dinner_people,
+    ]
+  );
+}
+
+export function setMealPeople(date: string, mealKey: MealKey, people: number): void {
+  const current = getMealPlan(date);
+  db.runSync(
+    'INSERT OR REPLACE INTO meal_plans (date, lunch_id, dinner_id, lunch_side_id, dinner_side_id, lunch_side2_id, dinner_side2_id, lunch_people, dinner_people) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
+    [
+      date,
+      current.lunch, current.dinner,
+      current.lunch_side, current.dinner_side,
+      current.lunch_side2, current.dinner_side2,
+      mealKey === 'lunch' ? people : current.lunch_people,
+      mealKey === 'dinner' ? people : current.dinner_people,
     ]
   );
 }
@@ -252,6 +279,13 @@ export function addToShoppingList(items: { name: string; recipe_name: string }[]
 
 export function toggleShoppingItem(id: number): void {
   db.runSync('UPDATE shopping_list SET done = CASE WHEN done = 1 THEN 0 ELSE 1 END WHERE id = ?;', [id]);
+}
+
+/** Coche/décoche d'un coup tous les articles fusionnés dans une même ligne */
+export function setShoppingItemsDone(ids: number[], done: boolean): void {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => '?').join(',');
+  db.runSync(`UPDATE shopping_list SET done = ? WHERE id IN (${placeholders});`, [done ? 1 : 0, ...ids]);
 }
 
 export function clearShoppingList(): void {

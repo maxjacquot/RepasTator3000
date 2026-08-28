@@ -17,6 +17,7 @@ import {
   getRecipeById,
   deleteRecipe,
   updateRecipe,
+  setMeal,
   addToShoppingList,
   updateShoppingItemName,
   getShoppingList,
@@ -27,7 +28,7 @@ import {
 } from '../../lib/database';
 import { colors, fonts, typography, spacing, radii, shadows } from '../../lib/theme';
 import { useAppAlert } from '../../lib/AppAlert';
-import { PlanningModal } from '../../lib/PlanningModal';
+import { PlanningModal, type PendingAdd } from '../../lib/PlanningModal';
 import { formatQty } from '../../lib/ShoppingAdjustModal';
 import {
   IngredientsAdjustModal,
@@ -314,7 +315,8 @@ export default function RecipeScreen() {
   const [planningModalVisible, setPlanningModalVisible] = useState(false);
   const [adjustModalVisible, setAdjustModalVisible] = useState(false);
   const [ingredientLines, setIngredientLines] = useState<IngredientLine[]>([]);
-  const [totalSlotsRef, setTotalSlotsRef] = useState(1);
+  const [totalPeople, setTotalPeople] = useState(1);
+  const [pendingMealAdds, setPendingMealAdds] = useState<PendingAdd[]>([]);
 
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -358,15 +360,30 @@ export default function RecipeScreen() {
     router.back();
   }
 
-  function handlePlanningConfirm(newSlots: number) {
-    if (!recipe || newSlots === 0) return;
-    setTotalSlotsRef(newSlots);
-    setIngredientLines(parseIngredients(recipe.ingredients, newSlots));
+  function handlePlanningConfirm(pendingAdds: PendingAdd[], people: number) {
+    if (!recipe || pendingAdds.length === 0) return;
+    setPendingMealAdds(pendingAdds);
+    setTotalPeople(people);
+    setIngredientLines(parseIngredients(recipe.ingredients, people));
     setAdjustModalVisible(true);
+  }
+
+  /** Les créneaux ne sont écrits en base qu'une fois les courses tranchées */
+  function confirmCalendar(adds: PendingAdd[]) {
+    for (const { dateStr, slot, id, people } of adds) {
+      setMeal(dateStr, slot, id, people);
+    }
+    setPendingMealAdds([]);
+  }
+
+  function handleNeedNothing() {
+    confirmCalendar(pendingMealAdds);
+    setAdjustModalVisible(false);
   }
 
   function handleAddToShopping(lines: IngredientLine[]) {
     if (!recipe) return;
+    confirmCalendar(pendingMealAdds);
     const active = lines.filter((l) => l.qty !== null ? l.currentQty > 0 : l.included);
     const existing = getShoppingList().filter((i) => i.recipe_name === recipe.title && i.done === 0);
     const toInsert: { name: string; recipe_name: string }[] = [];
@@ -723,9 +740,10 @@ export default function RecipeScreen() {
           visible={adjustModalVisible}
           recipe={recipe}
           lines={ingredientLines}
-          totalSlots={totalSlotsRef}
-          onClose={() => setAdjustModalVisible(false)}
+          totalPeople={totalPeople}
+          onClose={() => { setPendingMealAdds([]); setAdjustModalVisible(false); }}
           onAdd={handleAddToShopping}
+          onNeedNothing={handleNeedNothing}
           onLinesChange={setIngredientLines}
         />
       )}

@@ -23,13 +23,15 @@ import {
   addToShoppingList,
   updateShoppingItemName,
   getShoppingList,
+  mealKeyOf,
   type Recipe,
+  type MealSlot,
 } from '../lib/database';
 import { colors, fonts, typography, spacing, radii, shadows, Badge } from '../lib/theme';
 import { TabBar, type TabDef } from '../lib/TabBar';
 import { CoursesPanel } from '../lib/panels/CoursesPanel';
 import { RecipesPanel } from '../lib/panels/RecipesPanel';
-import { PlanningModal } from '../lib/PlanningModal';
+import { PlanningModal, type PendingAdd } from '../lib/PlanningModal';
 import {
   IngredientsAdjustModal,
   parseIngredients,
@@ -39,6 +41,7 @@ import {
   type IngredientLine,
 } from '../lib/ShoppingAdjustModal';
 import { useAppAlert } from '../lib/AppAlert';
+import { searchRecipes } from '../lib/recipeSearch';
 
 // ─── Helpers date ─────────────────────────────────────────────
 
@@ -74,6 +77,8 @@ type DayData = {
   dinnerRecipe: Recipe | null;
   dinnerSideRecipe: Recipe | null;
   dinnerSide2Recipe: Recipe | null;
+  lunchPeople: number;
+  dinnerPeople: number;
 };
 
 // ─── Modale choix de recette ──────────────────────────────────
@@ -117,11 +122,9 @@ function RecipePickerModal({ visible, onClose, onSelect }: RecipePickerModalProp
     }
   }, [visible]);
 
-  const filtered = recipes.filter((r) => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase());
-    const matchCat = activeCategory === 'Toutes' || r.category === activeCategory;
-    return matchSearch && matchCat;
-  });
+  const filtered = searchRecipes(recipes, search).filter(
+    ({ recipe }) => activeCategory === 'Toutes' || recipe.category === activeCategory
+  );
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -136,7 +139,7 @@ function RecipePickerModal({ visible, onClose, onSelect }: RecipePickerModalProp
         <View style={picker.searchWrap}>
           <TextInput
             style={picker.search}
-            placeholder="Rechercher..."
+            placeholder="Rechercher un plat, un ingrédient..."
             placeholderTextColor={colors.textSecondary}
             value={search}
             onChangeText={setSearch}
@@ -160,13 +163,13 @@ function RecipePickerModal({ visible, onClose, onSelect }: RecipePickerModalProp
 
         <FlatList
           data={filtered}
-          keyExtractor={(r) => String(r.id)}
+          keyExtractor={({ recipe }) => String(recipe.id)}
           contentContainerStyle={picker.list}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <Text style={picker.empty}>Aucune recette trouvée.</Text>
           }
-          renderItem={({ item }) => {
+          renderItem={({ item: { recipe: item, ingredientHits } }) => {
             const emoji = PICKER_EMOJI[item.category] ?? '🍴';
             const emojiBg = PICKER_EMOJI_BG[item.category] ?? colors.primaryLight;
             const badge = getPickerBadge(item);
@@ -193,6 +196,11 @@ function RecipePickerModal({ visible, onClose, onSelect }: RecipePickerModalProp
                     )}
                   </View>
                   <Badge label={badge.label} color={badge.color} style={picker.badge} />
+                  {ingredientHits.length > 0 && (
+                    <Text style={picker.itemHits} numberOfLines={1}>
+                      🧺 contient : {ingredientHits.join(', ')}
+                    </Text>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -244,6 +252,7 @@ interface MealSlotProps {
   recipe: Recipe | null;
   sideRecipe: Recipe | null;
   side2Recipe: Recipe | null;
+  people: number;
   onView: () => void;
   onClear: () => void;
   onAdd: () => void;
@@ -255,12 +264,15 @@ interface MealSlotProps {
   onAddSide2: () => void;
 }
 
-function MealSlot({ icon, label, recipe, sideRecipe, side2Recipe, onView, onClear, onAdd, onViewSide, onClearSide, onAddSide, onViewSide2, onClearSide2, onAddSide2 }: MealSlotProps) {
+function MealSlot({ icon, label, recipe, sideRecipe, side2Recipe, people, onView, onClear, onAdd, onViewSide, onClearSide, onAddSide, onViewSide2, onClearSide2, onAddSide2 }: MealSlotProps) {
   return (
     <View style={styles.slot}>
       <View style={styles.slotHeader}>
         <Text style={styles.slotIcon}>{icon}</Text>
         <Text style={styles.slotLabel}>{label}</Text>
+        {recipe && (
+          <Text style={styles.peopleBadge}>👥 {people} pers.</Text>
+        )}
       </View>
 
       {recipe ? (
@@ -337,6 +349,7 @@ function DayPage({ day, width, height, isToday, router, onClearMeal, onAddMeal }
           recipe={day.lunchRecipe}
           sideRecipe={day.lunchSideRecipe}
           side2Recipe={day.lunchSide2Recipe}
+          people={day.lunchPeople}
           onView={() => router.push(`/recipe/${day.lunchRecipe!.id}`)}
           onClear={() => onClearMeal(day.dateStr, 'lunch')}
           onAdd={() => onAddMeal(day.dateStr, 'lunch')}
@@ -353,6 +366,7 @@ function DayPage({ day, width, height, isToday, router, onClearMeal, onAddMeal }
           recipe={day.dinnerRecipe}
           sideRecipe={day.dinnerSideRecipe}
           side2Recipe={day.dinnerSide2Recipe}
+          people={day.dinnerPeople}
           onView={() => router.push(`/recipe/${day.dinnerRecipe!.id}`)}
           onClear={() => onClearMeal(day.dateStr, 'dinner')}
           onAdd={() => onAddMeal(day.dateStr, 'dinner')}
@@ -388,8 +402,8 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
   const [planningPreselect, setPlanningPreselect] = useState<{ dateStr: string; slot: 'lunch' | 'dinner' } | null>(null);
   const [adjustRecipe, setAdjustRecipe] = useState<Recipe | null>(null);
   const [adjustLines, setAdjustLines] = useState<IngredientLine[]>([]);
-  const [adjustSlots, setAdjustSlots] = useState(1);
-  const [pendingMealAdds, setPendingMealAdds] = useState<{ dateStr: string; slot: string; id: number }[]>([]);
+  const [adjustPeople, setAdjustPeople] = useState(1);
+  const [pendingMealAdds, setPendingMealAdds] = useState<{ dateStr: string; slot: MealSlot; id: number; people: number }[]>([]);
 
   const loadData = useCallback(() => {
     const loaded: DayData[] = Array.from({ length: DAYS_COUNT }, (_, offset) => {
@@ -404,6 +418,8 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
         dinnerRecipe: plan.dinner ? getRecipeById(plan.dinner) : null,
         dinnerSideRecipe: plan.dinner_side ? getRecipeById(plan.dinner_side) : null,
         dinnerSide2Recipe: plan.dinner_side2 ? getRecipeById(plan.dinner_side2) : null,
+        lunchPeople: plan.lunch_people,
+        dinnerPeople: plan.dinner_people,
       };
     });
     setDays(loaded);
@@ -426,22 +442,25 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
     setPickerTarget(null);
 
     if (slot === 'lunch_side' || slot === 'dinner_side' || slot === 'lunch_side2' || slot === 'dinner_side2') {
-      setPendingMealAdds([{ dateStr, slot, id: recipe.id }]);
+      // Un accompagnement reprend le nombre de convives du créneau parent
+      const plan = getMealPlan(dateStr);
+      const people = mealKeyOf(slot) === 'lunch' ? plan.lunch_people : plan.dinner_people;
+      setPendingMealAdds([{ dateStr, slot, id: recipe.id, people }]);
       setAdjustRecipe(recipe);
-      setAdjustLines(parseIngredients(recipe.ingredients, 1));
-      setAdjustSlots(1);
+      setAdjustLines(parseIngredients(recipe.ingredients, people));
+      setAdjustPeople(people);
     } else {
       setPlanningPreselect({ dateStr, slot });
       setPlanningRecipe(recipe);
     }
   }
 
-  function handlePlanningConfirm(pendingAdds: { dateStr: string; slot: string; id: number }[], newSlots: number) {
+  function handlePlanningConfirm(pendingAdds: PendingAdd[], totalPeople: number) {
     setPendingMealAdds(pendingAdds);
-    if (planningRecipe && newSlots > 0) {
+    if (planningRecipe && totalPeople > 0) {
       setAdjustRecipe(planningRecipe);
-      setAdjustLines(parseIngredients(planningRecipe.ingredients, newSlots));
-      setAdjustSlots(newSlots);
+      setAdjustLines(parseIngredients(planningRecipe.ingredients, totalPeople));
+      setAdjustPeople(totalPeople);
     }
     setPlanningRecipe(null);
     setPlanningPreselect(null);
@@ -449,8 +468,8 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
   }
 
   function confirmCalendar() {
-    for (const { dateStr, slot, id } of pendingMealAdds) {
-      setMeal(dateStr, slot as any, id);
+    for (const { dateStr, slot, id, people } of pendingMealAdds) {
+      setMeal(dateStr, slot, id, people);
     }
     setPendingMealAdds([]);
     loadData();
@@ -580,7 +599,7 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
           visible
           recipe={adjustRecipe}
           lines={adjustLines}
-          totalSlots={adjustSlots}
+          totalPeople={adjustPeople}
           onClose={() => { setPendingMealAdds([]); setAdjustRecipe(null); }}
           onAdd={handleAddToShopping}
           onNeedNothing={handleNeedNothing}
@@ -799,6 +818,17 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   slotIcon: { fontSize: 18 },
+  peopleBadge: {
+    marginLeft: 'auto',
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.bold,
+    color: colors.textSecondary,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    overflow: 'hidden',
+  },
   slotLabel: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.bold,
@@ -1034,6 +1064,12 @@ const picker = StyleSheet.create({
   itemMeta: {
     fontSize: typography.fontSizes.sm,
     color: colors.textSecondary,
+  },
+  itemHits: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSizes.xs,
+    color: colors.primary,
+    fontWeight: typography.fontWeights.semiBold,
   },
   itemMetaSep: {
     fontSize: typography.fontSizes.sm,

@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "RepasTator 3000",
+  "short_name": "RepasTator",
+  "description": "Recettes, planning des repas et liste de courses.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#C74B2B",
+  "background_color": "#FAF6F0",
+  "icons": [
+    { "src": "/icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icones/icone-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

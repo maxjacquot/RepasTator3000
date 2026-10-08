@@ -94,7 +94,7 @@ export function enregistrer(espace, cle, valeur, versionConnue, utilisateur) {
   }
 }
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.ttf': 'font/ttf', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 
 async function fichierStatique(res, route) {
   const chemin = path.normalize(path.join(DIST, decodeURIComponent(route)));
@@ -117,6 +117,8 @@ async function fichierStatique(res, route) {
 async function router(req, res) {
   const route = new URL(req.url, 'http://local').pathname;
   if (route === '/sante') return json(res, 200, { ok: true });
+  // Appli installable : le téléphone lit le manifeste et les icônes sans cookie (Caddy les laisse passer).
+  if (req.method === 'GET' && (route === '/manifest.webmanifest' || route.startsWith('/icones/')) && (await fichierStatique(res, route))) return;
 
   const utilisateur = utilisateurDe(req);
   if (!utilisateur) return json(res, 401, { erreur: 'Non connecté.' });

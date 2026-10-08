@@ -1,5 +1,7 @@
 import { SEED_RECIPES, toDbFormat } from './data/recipes';
 import { parseImportJson, type ImportResult } from './data/importRecipes';
+// Données sur le serveur (maison.mjacquot.fr), gardées en mémoire : voir stockage.web.ts
+import { stockage } from './stockage.web';
 
 export type { ImportResult };
 
@@ -43,7 +45,7 @@ export function initDatabase() {
 
 function loadRecipes(): Recipe[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = stockage.getItem(STORAGE_KEY);
     const items: Recipe[] = raw ? JSON.parse(raw) : [];
     return items.map((r) => ({ ...r, cook_time: r.cook_time ?? 0, steps: r.steps ?? '', ingredients: r.ingredients ?? '' }));
   } catch {
@@ -52,7 +54,7 @@ function loadRecipes(): Recipe[] {
 }
 
 function saveRecipes(recipes: Recipe[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+  stockage.setItem(STORAGE_KEY, JSON.stringify(recipes));
 }
 
 function nextId(recipes: Recipe[]): number {
@@ -98,7 +100,7 @@ type MealPlansStore = Record<string, { lunch: number | null; dinner: number | nu
 
 function loadMealPlans(): MealPlansStore {
   try {
-    const raw = localStorage.getItem(MEAL_PLANS_KEY);
+    const raw = stockage.getItem(MEAL_PLANS_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -106,7 +108,7 @@ function loadMealPlans(): MealPlansStore {
 }
 
 function saveMealPlans(plans: MealPlansStore): void {
-  localStorage.setItem(MEAL_PLANS_KEY, JSON.stringify(plans));
+  stockage.setItem(MEAL_PLANS_KEY, JSON.stringify(plans));
 }
 
 export function getMealPlan(date: string): MealPlan {
@@ -147,7 +149,7 @@ export function setMealPeople(date: string, mealKey: MealKey, people: number): v
 
 function loadShopping(): ShoppingItem[] {
   try {
-    const raw = localStorage.getItem(SHOPPING_KEY);
+    const raw = stockage.getItem(SHOPPING_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -155,7 +157,7 @@ function loadShopping(): ShoppingItem[] {
 }
 
 function saveShopping(items: ShoppingItem[]): void {
-  localStorage.setItem(SHOPPING_KEY, JSON.stringify(items));
+  stockage.setItem(SHOPPING_KEY, JSON.stringify(items));
 }
 
 function nextShoppingId(items: ShoppingItem[]): number {
@@ -230,13 +232,13 @@ const SEED_ROOMS: Omit<Room, 'id'>[] = [
 
 function loadRooms(): Room[] {
   try {
-    const raw = localStorage.getItem(ROOMS_KEY);
+    const raw = stockage.getItem(ROOMS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveRooms(rooms: Room[]): void {
-  localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+  stockage.setItem(ROOMS_KEY, JSON.stringify(rooms));
 }
 
 function nextRoomId(rooms: Room[]): number {
@@ -245,13 +247,13 @@ function nextRoomId(rooms: Room[]): number {
 
 function loadRoomTasks(): RoomTask[] {
   try {
-    const raw = localStorage.getItem(ROOM_TASKS_KEY);
+    const raw = stockage.getItem(ROOM_TASKS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveRoomTasks(tasks: RoomTask[]): void {
-  localStorage.setItem(ROOM_TASKS_KEY, JSON.stringify(tasks));
+  stockage.setItem(ROOM_TASKS_KEY, JSON.stringify(tasks));
 }
 
 function nextTaskId(tasks: RoomTask[]): number {
@@ -260,7 +262,9 @@ function nextTaskId(tasks: RoomTask[]): number {
 
 export function initRooms(): void {
   const existing = loadRooms();
-  if (existing.length !== 11) {
+  // Seulement si aucune pièce : avant, « !== 11 » effaçait pièces ET tâches dès qu'on ajoutait
+  // ou supprimait une pièce (données partagées sur le serveur : à ne surtout pas faire).
+  if (existing.length === 0) {
     saveRooms(SEED_ROOMS.map((r, i) => ({ ...r, id: i + 1 })));
     saveRoomTasks([]);
   }
@@ -319,13 +323,13 @@ export function deleteRoomTask(id: number): void {
 
 function loadProjects(): RoomProject[] {
   try {
-    const raw = localStorage.getItem(PROJECTS_KEY);
+    const raw = stockage.getItem(PROJECTS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveProjects(projects: RoomProject[]): void {
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  stockage.setItem(PROJECTS_KEY, JSON.stringify(projects));
 }
 
 function nextProjectId(projects: RoomProject[]): number {
@@ -377,13 +381,13 @@ const SPORT_SESSIONS_KEY = 'cuisinator_sport_sessions';
 
 function loadSportSessions(): SportSession[] {
   try {
-    const raw = localStorage.getItem(SPORT_SESSIONS_KEY);
+    const raw = stockage.getItem(SPORT_SESSIONS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
 function saveSportSessions(sessions: SportSession[]): void {
-  localStorage.setItem(SPORT_SESSIONS_KEY, JSON.stringify(sessions));
+  stockage.setItem(SPORT_SESSIONS_KEY, JSON.stringify(sessions));
 }
 
 export function getSportSession(date: string): SportSession | null {

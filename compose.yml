@@ -1,0 +1,22 @@
+# Maisontator (version web) sur le serveur, lancé par deployer-projet dans /srv/apps/cuisinator3000.
+services:
+  app:
+    build: .
+    # Nom utilisé par Caddy : reverse_proxy cuisinator3000:3000
+    container_name: cuisinator3000
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      TZ: Europe/Paris
+      DOSSIER_DONNEES: /data
+    # Base SQLite (recettes, planning, courses, maison, sport) : à sauvegarder
+    volumes:
+      - /srv/data/cuisinator3000:/data
+    # PAS de "ports:" : Caddy joint le conteneur par le réseau "web".
+    networks:
+      - web
+    mem_limit: 256m
+
+networks:
+  web:
+    external: true

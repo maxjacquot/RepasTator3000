@@ -6,9 +6,9 @@ import { PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import * as SplashScreen from 'expo-splash-screen';
 import { initDatabase } from '../lib/database';
 import { colors } from '../lib/theme';
+import SyncGate from '../lib/SyncGate';
 
 SplashScreen.preventAutoHideAsync();
-initDatabase();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -22,7 +22,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <SyncGate onReady={initDatabase}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -38,6 +38,6 @@ export default function RootLayout() {
         <Stack.Screen name="sport" options={{ headerShown: false }} />
         <Stack.Screen name="recipe/[id]" options={{ title: 'Recette' }} />
       </Stack>
-    </>
+    </SyncGate>
   );
 }

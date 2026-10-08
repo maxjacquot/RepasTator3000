@@ -1,0 +1,13 @@
+{
+  "name": "maisontator-api",
+  "private": true,
+  "type": "module",
+  "description": "Back de la version web de Maisontator (maison.mjacquot.fr)",
+  "scripts": {
+    "start": "node serveur.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

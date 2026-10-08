@@ -1,0 +1,66 @@
+# Push sur main → tests → déploiement sur le serveur → vérification que le site répond.
+# Modèle : serveur-infra/templates/nouveau-projet. Procédure : serveur-infra/docs/ajouter-un-projet.md
+name: Tests et déploiement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # bouton « Run workflow » pour redéployer à la main
+
+# Un seul déploiement à la fois ; un nouveau push attend la fin du précédent.
+concurrency:
+  group: deploiement
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  URL: https://maison.mjacquot.fr
+  # Serveur et sa clé d'hôte (empreinte SHA256:pBsMxH6gzHnLq5EgltzPmYqu5ymlEK0J33lHYZTSBLU,
+  # vérifiée le 2026-10-08) : on refuse de se connecter à un autre serveur.
+  SERVEUR: 178.105.44.61
+  CLE_HOTE_SERVEUR: 178.105.44.61 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII9Rrvx1aAvg52yTRlQbTCv+l12v4DEVRJWf6ZBr5Y4k
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+        working-directory: api
+
+  deployer:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clé SSH de déploiement
+        env:
+          CLE: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          echo "$CLE_HOTE_SERVEUR" > ~/.ssh/known_hosts
+          printf '%s\n' "$CLE" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+
+      # La clé ne peut lancer qu'une commande sur le serveur : deployer-projet <ce projet>.
+      - name: Déploiement sur le serveur
+        run: ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "deploy@$SERVEUR"
+
+      # Toute réponse HTTP en dessous de 500 compte (401 = site protégé par mot de passe, c'est normal).
+      - name: Le site répond
+        run: |
+          for i in $(seq 1 12); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "$URL" || true)
+            echo "Essai $i : HTTP $CODE"
+            if [[ "$CODE" =~ ^[234] ]]; then exit 0; fi
+            sleep 5
+          done
+          echo "Le site ne répond pas correctement après le déploiement." >&2
+          exit 1

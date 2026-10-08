@@ -1,0 +1,14 @@
+.git
+.github
+.expo
+.claude
+.agents
+node_modules
+dist
+web-build
+android
+ios
+api/tests
+api/donnees-locales
+*.log
+.env

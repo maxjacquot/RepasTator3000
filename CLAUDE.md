@@ -117,3 +117,14 @@ expo run:ios        # build iOS
 - `database.native.ts` et `database.web.ts` ont la même API — Metro choisit le bon fichier selon la plateforme
 - `ingredients`, `steps`, `tags` sont stockés en JSON sérialisé dans SQLite — toujours parser avant usage
 - L'initialisation de la DB est protégée par un flag `_dbReady` pour éviter les initialisations multiples
+
+## Version web en ligne : https://maison.mjacquot.fr (depuis le 2026-10-08)
+- Réservée aux comptes du portail `mjacquot.fr` (repo `maxjacquot/portail`) : Max (admin) et sa copine (user).
+- **Front** : export web Expo (`npx expo export -p web`), servi par le back.
+- **Back** : `api/serveur.js` (Node 24, `node:sqlite`, aucune dépendance), base `/srv/data/cuisinator3000/maisontator.sqlite` sur le serveur.
+  - Données **partagées par le foyer** (recettes, planning, courses, maison) ; **sport personnel** à chaque utilisateur.
+  - Une ligne par clé (les mêmes clés qu'avant dans localStorage), avec version : modification simultanée → 409, la version du serveur gagne, l'utilisateur est prévenu. Historique des 50 dernières versions par clé (table `historique`).
+- Côté appli : `lib/stockage.web.ts` remplace localStorage (cache mémoire synchronisé), `lib/SyncGate.web.tsx` charge les données avant l'affichage et les recharge au retour sur l'onglet. iOS/Android inchangés (`SyncGate.tsx` ne fait rien, SQLite local).
+- `initRooms` (web) : ne crée les pièces que s'il n'y en a aucune (avant : réinitialisait pièces ET tâches dès que le nombre ≠ 11).
+- Local : `npx expo export -p web --output-dir dist` puis `cd api && npm start` → http://localhost:3000 (utilisateur « dev »). Tests : `cd api && npm test`.
+- Déploiement : push sur `main` → GitHub Actions (tsc + tests api) → `deployer-projet cuisinator3000` (build Docker sur le serveur).

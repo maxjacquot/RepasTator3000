@@ -1,8 +1,8 @@
 {
-  "name": "maisontator-api",
+  "name": "repastator-api",
   "private": true,
   "type": "module",
-  "description": "Back de la version web de Maisontator (maison.mjacquot.fr)",
+  "description": "Back de la version web de RepasTator (repas.mjacquot.fr)",
   "scripts": {
     "start": "node serveur.js",
     "test": "node --test"

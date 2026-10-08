@@ -1,5 +1,5 @@
 // ============================================================
-// theme.ts — Design System Maisontator 3000
+// theme.ts — Design System RepasTator 3000
 // ============================================================
 
 import React from 'react';

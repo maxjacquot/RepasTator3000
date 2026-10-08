@@ -1,6 +1,6 @@
 import { SEED_RECIPES, toDbFormat } from './data/recipes';
 import { parseImportJson, type ImportResult } from './data/importRecipes';
-// Données sur le serveur (maison.mjacquot.fr), gardées en mémoire : voir stockage.web.ts
+// Données sur le serveur (repas.mjacquot.fr), gardées en mémoire : voir stockage.web.ts
 import { stockage } from './stockage.web';
 
 export type { ImportResult };

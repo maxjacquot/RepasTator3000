@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 process.env.NODE_ENV = 'test';
-process.env.DOSSIER_DONNEES = mkdtempSync(path.join(tmpdir(), 'maisontator-'));
+process.env.DOSSIER_DONNEES = mkdtempSync(path.join(tmpdir(), 'repastator-'));
 let base, serveur;
 before(async () => {
   ({ serveur } = await import('../serveur.js'));

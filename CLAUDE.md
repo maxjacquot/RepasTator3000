@@ -1,6 +1,9 @@
-# Cuisinator 3000 — Contexte projet
+# RepasTator 3000 — Contexte projet
 
-Application mobile de gestion de recettes et de planification de repas, développée avec Expo (React Native).
+Application de gestion de recettes, de planification des repas et de liste de courses, développée avec Expo (React Native).
+
+**Historique du nom** : Cuisinator 3000, puis Maisontator 3000 (avec parties Maison et Sport), renommée RepasTator 3000 le 2026-10-08 quand Maison et Sport ont été supprimées (inutilisées). Repo `maxjacquot/RepasTator3000` (ex-`cuisinator3000`).
+Identifiants techniques **gardés volontairement** (liés aux données ou aux téléphones déjà installés) : clés de stockage `cuisinator_*`, base mobile `cuisinator.db`, slug/scheme Expo `cuisinator3000` (projet EAS), paquet Android `com.anonymous.cuisinator3000`, clé de droits `cuisinator` dans le portail.
 
 ## Stack technique
 
@@ -118,13 +121,13 @@ expo run:ios        # build iOS
 - `ingredients`, `steps`, `tags` sont stockés en JSON sérialisé dans SQLite — toujours parser avant usage
 - L'initialisation de la DB est protégée par un flag `_dbReady` pour éviter les initialisations multiples
 
-## Version web en ligne : https://maison.mjacquot.fr (depuis le 2026-10-08)
+## Version web en ligne : https://repas.mjacquot.fr (depuis le 2026-10-08 ; l'ancienne adresse maison.mjacquot.fr redirige)
 - Réservée aux comptes du portail `mjacquot.fr` (repo `maxjacquot/portail`) : Max (admin) et sa copine (user).
 - **Front** : export web Expo (`npx expo export -p web`), servi par le back.
-- **Back** : `api/serveur.js` (Node 24, `node:sqlite`, aucune dépendance), base `/srv/data/cuisinator3000/maisontator.sqlite` sur le serveur.
-  - Données **partagées par le foyer** (recettes, planning, courses, maison). Parties Sport et Projets de maison supprimées le 2026-10-08 (inutilisées) : les tâches sont rattachées directement aux pièces.
+- **Back** : `api/serveur.js` (Node 24, `node:sqlite`, aucune dépendance), base `/srv/data/repastator/repastator.sqlite` sur le serveur (projet `repastator`).
+  - Toutes les données sont **partagées par le foyer** (recettes, planning, courses).
   - Une ligne par clé (les mêmes clés qu'avant dans localStorage), avec version : modification simultanée → 409, la version du serveur gagne, l'utilisateur est prévenu. Historique des 50 dernières versions par clé (table `historique`).
 - Côté appli : `lib/stockage.web.ts` remplace localStorage (cache mémoire synchronisé), `lib/SyncGate.web.tsx` charge les données avant l'affichage et les recharge au retour sur l'onglet. iOS/Android inchangés (`SyncGate.tsx` ne fait rien, SQLite local).
-- `initRooms` (web) : ne crée les pièces que s'il n'y en a aucune (avant : réinitialisait pièces ET tâches dès que le nombre ≠ 11).
+- Lien « Mes outils » (`lib/LienMesOutils.tsx`) en haut du planning, vers le portail, si la personne a plusieurs outils.
 - Local : `npx expo export -p web --output-dir dist` puis `cd api && npm start` → http://localhost:3000 (utilisateur « dev »). Tests : `cd api && npm test`.
-- Déploiement : push sur `main` → GitHub Actions (tsc + tests api) → `deployer-projet cuisinator3000` (build Docker sur le serveur).
+- Déploiement : push sur `main` → GitHub Actions (tsc + tests api) → `deployer-projet repastator` (build Docker sur le serveur).

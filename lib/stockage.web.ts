@@ -1,4 +1,4 @@
-// Stockage de la version web, synchronisé avec le serveur (api/ de ce repo, maison.mjacquot.fr).
+// Stockage de la version web, synchronisé avec le serveur (api/ de ce repo, repas.mjacquot.fr).
 //
 // La couche de données (database.web.ts) est synchrone : elle lit et écrit des chaînes JSON par clé,
 // comme avec localStorage. On garde donc tout en mémoire :

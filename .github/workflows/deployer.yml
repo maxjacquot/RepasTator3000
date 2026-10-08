@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 env:
-  URL: https://maison.mjacquot.fr
+  URL: https://repas.mjacquot.fr
   # Serveur et sa clé d'hôte (empreinte SHA256:pBsMxH6gzHnLq5EgltzPmYqu5ymlEK0J33lHYZTSBLU,
   # vérifiée le 2026-10-08) : on refuse de se connecter à un autre serveur.
   SERVEUR: 178.105.44.61

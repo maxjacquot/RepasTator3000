@@ -1,4 +1,4 @@
-// Back de la version web de Maisontator (maison.mjacquot.fr).
+// Back de la version web de RepasTator (repas.mjacquot.fr).
 // - sert l'appli web (export Expo, dossier dist/) ;
 // - stocke les données dans SQLite (node:sqlite, sans dépendance) : une ligne par clé, en JSON,
 //   avec un numéro de version (deux personnes qui modifient la même chose : le second est prévenu) ;
@@ -6,6 +6,7 @@
 //
 // Connexion : par le portail mjacquot.fr (Caddy transmet X-Utilisateur). En local : « dev ».
 // Toutes les données sont partagées par le foyer (recettes, planning, courses).
+// Les clés gardent leur préfixe historique « cuisinator_ » (ancien nom de l'appli).
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { readFile } from 'node:fs/promises';
@@ -26,7 +27,7 @@ const CLES_FOYER = [
 ];
 
 mkdirSync(DOSSIER_DONNEES, { recursive: true });
-const db = new DatabaseSync(path.join(DOSSIER_DONNEES, 'maisontator.sqlite'));
+const db = new DatabaseSync(path.join(DOSSIER_DONNEES, 'repastator.sqlite'));
 db.exec(`
   PRAGMA journal_mode = WAL;
   CREATE TABLE IF NOT EXISTS donnees (
@@ -156,5 +157,5 @@ const serveur = createServer((req, res) => {
     if (!res.headersSent) json(res, e.code === 413 ? 413 : 500, { erreur: 'Erreur du serveur.' });
   });
 });
-if (process.env.NODE_ENV !== 'test') serveur.listen(PORT, () => console.log(`Maisontator : http://localhost:${PORT}`));
+if (process.env.NODE_ENV !== 'test') serveur.listen(PORT, () => console.log(`RepasTator : http://localhost:${PORT}`));
 export { serveur };

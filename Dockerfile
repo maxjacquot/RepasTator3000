@@ -1,4 +1,4 @@
-# Version web de Maisontator : export web de l'appli Expo + back (api/), sur maison.mjacquot.fr.
+# Version web de RepasTator : export web de l'appli Expo + back (api/), sur repas.mjacquot.fr.
 
 # --- Étape 1 : export web de l'appli Expo ---
 FROM node:24 AS web

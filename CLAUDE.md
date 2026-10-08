@@ -124,6 +124,7 @@ expo run:ios        # build iOS
 ## Version web en ligne : https://repas.mjacquot.fr (depuis le 2026-10-08 ; l'ancienne adresse maison.mjacquot.fr redirige)
 - Réservée aux comptes du portail `mjacquot.fr` (repo `maxjacquot/portail`) : Max (admin) et sa copine (user).
 - **Front** : export web Expo (`npx expo export -p web`), servi par le back.
+- **Appli installable** (PWA, « Ajouter à l'écran d'accueil ») : `public/manifest.webmanifest`, `public/icones/` et le modèle `public/index.html` (balises du manifeste et de l'icône iPhone), copiés dans `dist/` par `expo export`. Le back sert manifeste et icônes sans connexion (voir `serveur-infra/docs/decisions.md` D18).
 - **Back** : `api/serveur.js` (Node 24, `node:sqlite`, aucune dépendance), base `/srv/data/repastator/repastator.sqlite` sur le serveur (projet `repastator`).
   - Toutes les données sont **partagées par le foyer** (recettes, planning, courses).
   - Une ligne par clé (les mêmes clés qu'avant dans localStorage), avec version : modification simultanée → 409, la version du serveur gagne, l'utilisateur est prévenu. Historique des 50 dernières versions par clé (table `historique`).

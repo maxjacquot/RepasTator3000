@@ -29,7 +29,7 @@ import {
 } from '../lib/database';
 import { colors, fonts, typography, spacing, radii, shadows, Badge } from '../lib/theme';
 import { TabBar, type TabDef } from '../lib/TabBar';
-import LienMesOutils from '../lib/LienMesOutils';
+import BoutonOutils from '../lib/BoutonOutils';
 import { CoursesPanel } from '../lib/panels/CoursesPanel';
 import { RecipesPanel } from '../lib/panels/RecipesPanel';
 import { PlanningModal, type PendingAdd } from '../lib/PlanningModal';
@@ -512,7 +512,7 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
   return (
     <View style={[styles.panelRoot, { width }]} pointerEvents={isFocused ? 'auto' : 'none'}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.xl }]}>
-        <LienMesOutils />
+        <BoutonOutils />
         <View style={styles.headerTop}>
           <View style={styles.headerContent}>
             <View>

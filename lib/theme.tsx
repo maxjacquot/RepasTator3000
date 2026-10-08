@@ -27,8 +27,6 @@ export const colors = {
   border: '#EDE5D8',
   primaryLight: '#FAEEE9',  // Terracotta très clair — fond emoji
   successLight: '#EBF3EE',  // Vert très clair — fond emoji alternatif
-  house: '#4A6FA5',         // Bleu ardoise — univers Maison
-  houseLight: '#EBF0F8',    // Bleu très clair — fond icônes Maison
 } as const;
 
 // ─── Typographie ─────────────────────────────────────────────

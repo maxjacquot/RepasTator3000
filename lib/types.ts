@@ -55,33 +55,3 @@ export type MealPlan = {
   lunch_people: number;
   dinner_people: number;
 };
-
-// ─── Maison ───────────────────────────────────────────────────
-
-export type RoomTaskType = 'Travaux' | 'Achat' | 'Modification' | 'Idée';
-export type RoomTaskStatus = 'todo' | 'preparing' | 'in_progress' | 'done';
-export type RoomTaskPriority = 'high' | 'normal' | 'low';
-
-export type Room = {
-  id: number;
-  name: string;
-  icon: string;
-  color: string;
-};
-
-export type RoomShoppingItem = {
-  name: string;
-  done: boolean;
-};
-
-export type RoomTask = {
-  id: number;
-  room_id: number;
-  title: string;
-  type: RoomTaskType;
-  status: RoomTaskStatus;
-  priority: RoomTaskPriority;
-  note: string;
-  shopping_items: string; // JSON: RoomShoppingItem[]
-  created_at: string;
-};

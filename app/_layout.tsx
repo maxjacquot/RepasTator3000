@@ -33,8 +33,6 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="planning" options={{ headerShown: false }} />
-        <Stack.Screen name="maison" options={{ headerShown: false }} />
         <Stack.Screen name="recipe/[id]" options={{ title: 'Recette' }} />
       </Stack>
     </SyncGate>

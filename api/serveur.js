@@ -5,7 +5,7 @@
 // - garde l'historique des 50 dernières versions de chaque clé (pour réparer une erreur).
 //
 // Connexion : par le portail mjacquot.fr (Caddy transmet X-Utilisateur). En local : « dev ».
-// Toutes les données sont partagées par le foyer (recettes, planning, courses, maison).
+// Toutes les données sont partagées par le foyer (recettes, planning, courses).
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { readFile } from 'node:fs/promises';
@@ -23,8 +23,6 @@ const CLES_FOYER = [
   'cuisinator_recipes',
   'cuisinator_meal_plans',
   'cuisinator_shopping',
-  'cuisinator_rooms',
-  'cuisinator_room_tasks',
 ];
 
 mkdirSync(DOSSIER_DONNEES, { recursive: true });

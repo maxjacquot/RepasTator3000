@@ -41,13 +41,15 @@ test('modification simultanée : le second est prévenu (409) avec la version ga
   assert.deepEqual(JSON.parse(corps.valeur), [{ id: 1 }]);
 });
 
-test('sport et projets retirés : clés refusées', async () => {
+test('sport et maison retirés : clés refusées', async () => {
   assert.equal((await ecrire('max', 'cuisinator_sport_sessions', [], 0)).status, 404);
   assert.equal((await ecrire('max', 'cuisinator_room_projects', [], 0)).status, 404);
+  assert.equal((await ecrire('max', 'cuisinator_rooms', [], 0)).status, 404);
+  assert.equal((await ecrire('max', 'cuisinator_room_tasks', [], 0)).status, 404);
 });
 
 test('clé inconnue ou valeur invalide : refusée', async () => {
   assert.equal((await ecrire('max', 'autre_chose', [], 0)).status, 404);
-  const r = await fetch(`${base}/api/donnees/cuisinator_rooms`, { method: 'PUT', headers: en('max'), body: JSON.stringify({ valeur: 'pas du json', version: 0 }) });
+  const r = await fetch(`${base}/api/donnees/cuisinator_shopping`, { method: 'PUT', headers: en('max'), body: JSON.stringify({ valeur: 'pas du json', version: 0 }) });
   assert.equal(r.status, 400);
 });

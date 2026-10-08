@@ -6,12 +6,12 @@ import { stockage } from './stockage.web';
 export type { ImportResult };
 
 // ─── Re-exports des types ──────────────────────────────────────
-export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem } from './types';
+export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan } from './types';
 export { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 // ─── Init ─────────────────────────────────────────────────────
 
-import type { Recipe, ShoppingItem, MealPlan, MealSlot, MealKey, RoomTaskPriority } from './types';
+import type { Recipe, ShoppingItem, MealPlan, MealSlot, MealKey } from './types';
 import { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 const STORAGE_KEY = 'cuisinator_recipes';
@@ -19,7 +19,6 @@ const MEAL_PLANS_KEY = 'cuisinator_meal_plans';
 const SHOPPING_KEY = 'cuisinator_shopping';
 
 export function initDatabase() {
-  initRooms();
   const existing = loadRecipes();
   if (existing.length === 0) {
     const seeded = SEED_RECIPES.map((r, i) => ({ ...toDbFormat(r), id: i + 1 }));
@@ -206,137 +205,4 @@ export function updateShoppingItemName(id: number, name: string): void {
       item.id === id ? { ...item, name } : item
     )
   );
-}
-
-// ─── Maison ───────────────────────────────────────────────────
-
-import type { Room, RoomTask, RoomTaskStatus, RoomShoppingItem } from './types';
-
-const ROOMS_KEY = 'cuisinator_rooms';
-const ROOM_TASKS_KEY = 'cuisinator_room_tasks';
-
-const SEED_ROOMS: Omit<Room, 'id'>[] = [
-  { name: 'Salon',          icon: '🛋️', color: '#7B68EE' },
-  { name: 'Cuisine',        icon: '🍳', color: '#FF6B35' },
-  { name: 'Chambre',        icon: '🛏️', color: '#5B8DB8' },
-  { name: 'SDB',            icon: '🛁', color: '#20B2AA' },
-  { name: 'Hall',           icon: '🚪', color: '#F39C12' },
-  { name: 'WC',             icon: '🚽', color: '#4CAF50' },
-  { name: 'Bureau',         icon: '💻', color: '#3498DB' },
-  { name: 'Dressing',       icon: '👗', color: '#E07B54' },
-  { name: 'Couloir',        icon: '🚶', color: '#9B59B6' },
-  { name: 'Salle à manger', icon: '🍽️', color: '#1ABC9C' },
-  { name: 'Scellier',       icon: '📦', color: '#8FBC8F' },
-];
-
-function loadRooms(): Room[] {
-  try {
-    const raw = stockage.getItem(ROOMS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveRooms(rooms: Room[]): void {
-  stockage.setItem(ROOMS_KEY, JSON.stringify(rooms));
-}
-
-function nextRoomId(rooms: Room[]): number {
-  return rooms.length === 0 ? 1 : Math.max(...rooms.map((r) => r.id)) + 1;
-}
-
-function loadRoomTasks(): RoomTask[] {
-  try {
-    const raw = stockage.getItem(ROOM_TASKS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveRoomTasks(tasks: RoomTask[]): void {
-  stockage.setItem(ROOM_TASKS_KEY, JSON.stringify(tasks));
-}
-
-function nextTaskId(tasks: RoomTask[]): number {
-  return tasks.length === 0 ? 1 : Math.max(...tasks.map((t) => t.id)) + 1;
-}
-
-export function initRooms(): void {
-  const existing = loadRooms();
-  // Seulement si aucune pièce : avant, « !== 11 » effaçait pièces ET tâches dès qu'on ajoutait
-  // ou supprimait une pièce (données partagées sur le serveur : à ne surtout pas faire).
-  if (existing.length === 0) {
-    saveRooms(SEED_ROOMS.map((r, i) => ({ ...r, id: i + 1 })));
-    saveRoomTasks([]);
-  }
-}
-
-export function getRooms(): Room[] {
-  return loadRooms();
-}
-
-export function addRoom(room: Omit<Room, 'id'>): void {
-  const rooms = loadRooms();
-  saveRooms([...rooms, { ...room, id: nextRoomId(rooms) }]);
-}
-
-export function updateRoom(id: number, room: Omit<Room, 'id'>): void {
-  saveRooms(loadRooms().map((r) => r.id === id ? { ...room, id } : r));
-}
-
-export function deleteRoom(id: number): void {
-  saveRooms(loadRooms().filter((r) => r.id !== id));
-  saveRoomTasks(loadRoomTasks().filter((t) => t.room_id !== id));
-}
-
-export function getRoomTasks(roomId: number): RoomTask[] {
-  return loadRoomTasks().filter((t) => t.room_id === roomId).sort((a, b) => a.created_at.localeCompare(b.created_at));
-}
-
-export function getRoomTaskCounts(roomId: number): { total: number; done: number } {
-  const tasks = loadRoomTasks().filter((t) => t.room_id === roomId);
-  return { total: tasks.length, done: tasks.filter((t) => t.status === 'done').length };
-}
-
-export function addRoomTask(task: Omit<RoomTask, 'id'>): void {
-  const tasks = loadRoomTasks();
-  saveRoomTasks([...tasks, { ...task, shopping_items: task.shopping_items ?? '[]', id: nextTaskId(tasks) }]);
-}
-
-export function updateRoomTaskStatus(id: number, status: RoomTaskStatus): void {
-  saveRoomTasks(loadRoomTasks().map((t) => t.id === id ? { ...t, status } : t));
-}
-
-export function updateRoomTaskShoppingItems(id: number, items: RoomShoppingItem[]): void {
-  saveRoomTasks(loadRoomTasks().map((t) => t.id === id ? { ...t, shopping_items: JSON.stringify(items) } : t));
-}
-
-export function updateRoomTask(id: number, updates: { title: string; priority: RoomTaskPriority; note: string }): void {
-  saveRoomTasks(loadRoomTasks().map((t) => t.id === id ? { ...t, ...updates } : t));
-}
-
-export function deleteRoomTask(id: number): void {
-  saveRoomTasks(loadRoomTasks().filter((t) => t.id !== id));
-}
-
-export type RoomShoppingEntry = {
-  roomId: number;
-  roomName: string;
-  roomIcon: string;
-  roomColor: string;
-  taskId: number;
-  taskTitle: string;
-  items: RoomShoppingItem[];
-};
-
-export function getAllRoomShoppingItems(): RoomShoppingEntry[] {
-  const rooms = loadRooms();
-  const result: RoomShoppingEntry[] = [];
-  for (const room of rooms) {
-    const tasks = loadRoomTasks().filter((t) => t.room_id === room.id && t.status !== 'done');
-    for (const task of tasks) {
-      const items: RoomShoppingItem[] = JSON.parse(task.shopping_items || '[]');
-      if (items.length === 0) continue;
-      result.push({ roomId: room.id, roomName: room.name, roomIcon: room.icon, roomColor: room.color, taskId: task.id, taskTitle: task.title, items });
-    }
-  }
-  return result;
 }

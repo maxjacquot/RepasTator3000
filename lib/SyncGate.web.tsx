@@ -3,7 +3,7 @@
 // ré-affichée pour montrer la version à jour.
 import { useEffect, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { chargerDonnees, enCoursDEnvoi, surEvenement } from './stockage.web';
+import { chargerDonnees, enCoursDEnvoi, surEvenement, utilisateurConnecte } from './stockage.web';
 import { colors } from './theme';
 
 type Props = { onReady: () => void; children: ReactNode };
@@ -32,7 +32,14 @@ export default function SyncGate({ onReady, children }: Props) {
     if (etat !== 'pret') return;
     const desabonner = surEvenement((e) => {
       if (e.type === 'change') setRevision((r) => r + 1);
-      if (e.type === 'conflit') setBandeau(`${e.par} a modifié la même chose en même temps : sa version a été gardée.`);
+      // e.par est l'id du compte (pas son identifiant) : on dit seulement si c'était nous, sur un autre appareil
+      if (e.type === 'conflit') {
+        setBandeau(
+          e.par === utilisateurConnecte()
+            ? 'Vous avez modifié la même chose sur un autre appareil en même temps : cette version-là a été gardée.'
+            : "Quelqu'un d'autre a modifié la même chose en même temps : sa version a été gardée.",
+        );
+      }
       if (e.type === 'erreur') setBandeau(`Enregistrement impossible (${e.message}). Vérifiez la connexion internet.`);
     });
     const auRetour = async () => {

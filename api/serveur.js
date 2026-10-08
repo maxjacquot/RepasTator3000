@@ -4,7 +4,8 @@
 //   avec un numéro de version (deux personnes qui modifient la même chose : le second est prévenu) ;
 // - garde l'historique des 50 dernières versions de chaque clé (pour réparer une erreur).
 //
-// Connexion : par le portail mjacquot.fr (Caddy transmet X-Utilisateur). En local : « dev ».
+// Connexion : par le portail mjacquot.fr (Caddy transmet X-Utilisateur = id du compte, rangé dans maj_par).
+// En local : « dev ».
 // Toutes les données sont partagées par le foyer (recettes, planning, courses).
 // Les clés gardent leur préfixe historique « cuisinator_ » (ancien nom de l'appli).
 import { createServer } from 'node:http';

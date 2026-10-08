@@ -69,14 +69,6 @@ export type Room = {
   color: string;
 };
 
-export type RoomProject = {
-  id: number;
-  room_id: number;
-  title: string;
-  description: string;
-  created_at: string;
-};
-
 export type RoomShoppingItem = {
   name: string;
   done: boolean;
@@ -85,7 +77,6 @@ export type RoomShoppingItem = {
 export type RoomTask = {
   id: number;
   room_id: number;
-  project_id: number | null;
   title: string;
   type: RoomTaskType;
   status: RoomTaskStatus;
@@ -93,14 +84,4 @@ export type RoomTask = {
   note: string;
   shopping_items: string; // JSON: RoomShoppingItem[]
   created_at: string;
-};
-
-// ─── Sport ────────────────────────────────────────────────────
-
-export type SportSession = {
-  date: string;        // YYYY-MM-DD, clé primaire
-  push_ups: number;
-  knee_push_ups: number;
-  abs: number;
-  total_time: number;  // minutes
 };

@@ -3,7 +3,7 @@ import { SEED_RECIPES, toDbFormat } from './data/recipes';
 export type { ImportResult } from './data/importRecipes';
 
 // ─── Re-exports des types ──────────────────────────────────────
-export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomProject, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem, SportSession } from './types';
+export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem } from './types';
 export { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 // ─── Init ─────────────────────────────────────────────────────
@@ -58,33 +58,12 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS room_tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       room_id INTEGER NOT NULL,
-      project_id INTEGER,
       title TEXT NOT NULL,
       type TEXT NOT NULL DEFAULT 'Travaux',
       status TEXT NOT NULL DEFAULT 'todo',
       priority TEXT NOT NULL DEFAULT 'normal',
       note TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL
-    );
-  `);
-
-  db.execSync(`
-    CREATE TABLE IF NOT EXISTS room_projects (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      room_id INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL DEFAULT '',
-      created_at TEXT NOT NULL
-    );
-  `);
-
-  db.execSync(`
-    CREATE TABLE IF NOT EXISTS sport_sessions (
-      date TEXT PRIMARY KEY,
-      push_ups INTEGER NOT NULL DEFAULT 0,
-      knee_push_ups INTEGER NOT NULL DEFAULT 0,
-      abs INTEGER NOT NULL DEFAULT 0,
-      total_time INTEGER NOT NULL DEFAULT 0
     );
   `);
 
@@ -101,7 +80,6 @@ export function initDatabase() {
     `ALTER TABLE meal_plans ADD COLUMN lunch_people INTEGER NOT NULL DEFAULT 2;`,
     `ALTER TABLE meal_plans ADD COLUMN dinner_people INTEGER NOT NULL DEFAULT 2;`,
     `ALTER TABLE room_tasks ADD COLUMN shopping_items TEXT NOT NULL DEFAULT '[]';`,
-    `ALTER TABLE room_tasks ADD COLUMN project_id INTEGER;`,
   ]) {
     try { db.execSync(col); } catch { /* déjà présente */ }
   }
@@ -342,7 +320,6 @@ export function updateRoom(id: number, room: Omit<Room, 'id'>): void {
 
 export function deleteRoom(id: number): void {
   db.runSync('DELETE FROM room_tasks WHERE room_id = ?;', [id]);
-  db.runSync('DELETE FROM room_projects WHERE room_id = ?;', [id]);
   db.runSync('DELETE FROM rooms WHERE id = ?;', [id]);
 }
 
@@ -358,8 +335,8 @@ export function getRoomTaskCounts(roomId: number): { total: number; done: number
 
 export function addRoomTask(task: Omit<RoomTask, 'id'>): void {
   db.runSync(
-    'INSERT INTO room_tasks (room_id, project_id, title, type, status, priority, note, shopping_items, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
-    [task.room_id, task.project_id ?? null, task.title, task.type, task.status, task.priority, task.note, task.shopping_items ?? '[]', task.created_at]
+    'INSERT INTO room_tasks (room_id, title, type, status, priority, note, shopping_items, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
+    [task.room_id, task.title, task.type, task.status, task.priority, task.note, task.shopping_items ?? '[]', task.created_at]
   );
 }
 
@@ -402,69 +379,4 @@ export function getAllRoomShoppingItems(): RoomShoppingEntry[] {
     }
   }
   return result;
-}
-
-// ─── Projets ─────────────────────────────────────────────────
-
-import type { RoomProject } from './types';
-
-export function getProjects(roomId: number): RoomProject[] {
-  return db.getAllSync<RoomProject>(
-    'SELECT * FROM room_projects WHERE room_id = ? ORDER BY created_at ASC;',
-    [roomId]
-  );
-}
-
-export function addProject(project: Omit<RoomProject, 'id'>): void {
-  db.runSync(
-    'INSERT INTO room_projects (room_id, title, description, created_at) VALUES (?, ?, ?, ?);',
-    [project.room_id, project.title, project.description, project.created_at]
-  );
-}
-
-export function updateProject(id: number, updates: { title: string; description: string }): void {
-  db.runSync('UPDATE room_projects SET title=?, description=? WHERE id=?;', [updates.title, updates.description, id]);
-}
-
-export function deleteProject(id: number): void {
-  db.runSync('DELETE FROM room_tasks WHERE project_id = ?;', [id]);
-  db.runSync('DELETE FROM room_projects WHERE id = ?;', [id]);
-}
-
-export function getProjectTasks(projectId: number): RoomTask[] {
-  return db.getAllSync<RoomTask>(
-    'SELECT * FROM room_tasks WHERE project_id = ? ORDER BY created_at ASC;',
-    [projectId]
-  );
-}
-
-export function getProjectTaskCounts(projectId: number): { total: number; done: number } {
-  const total = db.getFirstSync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM room_tasks WHERE project_id = ?;',
-    [projectId]
-  );
-  const done = db.getFirstSync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM room_tasks WHERE project_id = ? AND status = ?;',
-    [projectId, 'done']
-  );
-  return { total: total?.count ?? 0, done: done?.count ?? 0 };
-}
-
-// ─── Sport ────────────────────────────────────────────────────
-
-import type { SportSession } from './types';
-
-export function getSportSession(date: string): SportSession | null {
-  return db.getFirstSync<SportSession>('SELECT * FROM sport_sessions WHERE date = ?;', [date]) ?? null;
-}
-
-export function setSportSession(session: SportSession): void {
-  db.runSync(
-    'INSERT OR REPLACE INTO sport_sessions (date, push_ups, knee_push_ups, abs, total_time) VALUES (?, ?, ?, ?, ?);',
-    [session.date, session.push_ups, session.knee_push_ups, session.abs, session.total_time]
-  );
-}
-
-export function getAllSportSessions(): SportSession[] {
-  return db.getAllSync<SportSession>('SELECT * FROM sport_sessions ORDER BY date DESC;');
 }

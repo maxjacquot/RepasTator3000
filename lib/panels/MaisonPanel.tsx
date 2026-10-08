@@ -183,10 +183,9 @@ interface MaisonPanelProps {
   width: number;
   isFocused: boolean;
   focusKey: number;
-  onGotoBoard: (projectId: number, projectTitle: string, roomColor: string) => void;
 }
 
-export function MaisonPanel({ width, isFocused, focusKey, onGotoBoard }: MaisonPanelProps) {
+export function MaisonPanel({ width, isFocused, focusKey }: MaisonPanelProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [rooms, setRooms] = useState<RoomWithCounts[]>([]);
@@ -230,7 +229,7 @@ export function MaisonPanel({ width, isFocused, focusKey, onGotoBoard }: MaisonP
             <Text style={styles.headerTitle}>Ma Maison</Text>
             <Text style={styles.headerSub}>
               {totalTasks === 0
-                ? 'Aucun projet en cours'
+                ? 'Aucune tâche en cours'
                 : `${doneTasks}/${totalTasks} tâches terminées`}
             </Text>
           </View>
@@ -265,7 +264,6 @@ export function MaisonPanel({ width, isFocused, focusKey, onGotoBoard }: MaisonP
           visible
           room={selectedRoom}
           onClose={() => { setSelectedRoom(null); loadData(); }}
-          onGotoBoard={onGotoBoard}
         />
       )}
     </View>

@@ -14,8 +14,6 @@ import { MaisonPanel } from '../lib/panels/MaisonPanel';
 import { MaisonCoursesPanel } from '../lib/panels/MaisonCoursesPanel';
 import { MaisonTasksPanel } from '../lib/panels/MaisonTasksPanel';
 
-type ProjectFilter = { id: number; name: string; roomColor: string };
-
 const MAISON_TABS: TabDef[] = [
   { label: 'Courses', icon: '🛒', activeColor: colors.house },
   { label: 'Plan', icon: '🏠', activeColor: colors.house },
@@ -26,7 +24,6 @@ export default function MaisonScreen() {
   const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState(1); // Démarre sur le plan
   const [focusKey, setFocusKey] = useState(0);
-  const [projectFilter, setProjectFilter] = useState<ProjectFilter | null>(null);
   const translateX = useRef(new Animated.Value(-width)).current; // tab 1 = -width
 
   useFocusEffect(
@@ -46,11 +43,6 @@ export default function MaisonScreen() {
     setActiveTab(newTab);
   }
 
-  function handleGotoBoard(projectId: number, projectName: string, roomColor: string) {
-    setProjectFilter({ id: projectId, name: projectName, roomColor });
-    switchTab(2);
-  }
-
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -60,8 +52,8 @@ export default function MaisonScreen() {
           style={[styles.panelRow, { width: width * 3, transform: [{ translateX }] }]}
         >
           <MaisonCoursesPanel width={width} isFocused={activeTab === 0} focusKey={focusKey} />
-          <MaisonPanel width={width} isFocused={activeTab === 1} focusKey={focusKey} onGotoBoard={handleGotoBoard} />
-          <MaisonTasksPanel width={width} isFocused={activeTab === 2} focusKey={focusKey} projectFilter={projectFilter} onClearFilter={() => setProjectFilter(null)} />
+          <MaisonPanel width={width} isFocused={activeTab === 1} focusKey={focusKey} />
+          <MaisonTasksPanel width={width} isFocused={activeTab === 2} focusKey={focusKey} />
         </Animated.View>
         <TabBar tabs={MAISON_TABS} activeTab={activeTab} onSwitch={switchTab} />
       </View>

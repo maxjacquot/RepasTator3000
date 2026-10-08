@@ -15,20 +15,17 @@ import { useRouter } from 'expo-router';
 import {
   getRooms,
   getRoomTasks,
-  getProjects,
   updateRoomTaskStatus,
   updateRoomTaskShoppingItems,
   deleteRoomTask,
   type Room,
   type RoomTask,
   type RoomTaskStatus,
-  type RoomProject,
   type RoomShoppingItem,
 } from '../database';
 import { colors, fonts, typography, spacing, radii, shadows } from '../theme';
 
 type TaskWithRoom = RoomTask & { room: Room };
-type ProjectWithRoom = RoomProject & { room: Room };
 
 const COLUMNS: { status: RoomTaskStatus; label: string; color: string }[] = [
   { status: 'todo',        label: 'À planifier',    color: '#8FA3BF' },
@@ -43,14 +40,10 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
   low:    { label: 'Plus tard', color: '#27AE60' },
 };
 
-type ProjectFilter = { id: number; name: string; roomColor: string };
-
 interface MaisonTasksPanelProps {
   width: number;
   isFocused: boolean;
   focusKey: number;
-  projectFilter: ProjectFilter | null;
-  onClearFilter: () => void;
 }
 
 const COL_WIDTH = 210;
@@ -225,26 +218,15 @@ function TaskDetailModal({ task, onClose, onUpdated, onDeleted }: TaskDetailModa
 
 // ─── Panel principal ──────────────────────────────────────────
 
-export function MaisonTasksPanel({ width, isFocused, focusKey, projectFilter, onClearFilter }: MaisonTasksPanelProps) {
+export function MaisonTasksPanel({ width, isFocused, focusKey }: MaisonTasksPanelProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [tasks, setTasks] = useState<TaskWithRoom[]>([]);
   const [boardHeight, setBoardHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  // Filtre interne (dropdown)
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [allProjects, setAllProjects] = useState<ProjectWithRoom[]>([]);
 
   // Tâche sélectionnée (détail)
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
-
-  // Sync depuis le filtre externe (bouton "Voir sur le tableau")
-  useEffect(() => {
-    setSelectedProjectId(projectFilter?.id ?? null);
-  }, [projectFilter]);
 
   const loadData = useCallback(() => {
     const rooms = getRooms();
@@ -257,33 +239,9 @@ export function MaisonTasksPanel({ width, isFocused, focusKey, projectFilter, on
     setTasks(all);
   }, []);
 
-  const loadProjects = useCallback(() => {
-    const rooms = getRooms();
-    const ps: ProjectWithRoom[] = [];
-    for (const room of rooms) {
-      for (const project of getProjects(room.id)) {
-        ps.push({ ...project, room });
-      }
-    }
-    setAllProjects(ps);
-  }, []);
-
   useEffect(() => {
-    if (isFocused) { loadData(); loadProjects(); }
+    if (isFocused) loadData();
   }, [isFocused, focusKey]);
-
-  const visibleTasks = selectedProjectId !== null
-    ? tasks.filter((t) => t.project_id === selectedProjectId)
-    : tasks;
-
-  const selectedProject = allProjects.find((p) => p.id === selectedProjectId) ?? null;
-
-  // Grouper les projets par pièce pour le dropdown
-  const roomGroups = allProjects.reduce<{ room: Room; projects: ProjectWithRoom[] }[]>((acc, p) => {
-    const existing = acc.find((g) => g.room.id === p.room.id);
-    if (existing) { existing.projects.push(p); } else { acc.push({ room: p.room, projects: [p] }); }
-    return acc;
-  }, []);
 
   function moveTask(taskId: number, direction: 'prev' | 'next') {
     const task = tasks.find((t) => t.id === taskId);
@@ -295,22 +253,13 @@ export function MaisonTasksPanel({ width, isFocused, focusKey, projectFilter, on
     loadData();
   }
 
-  function selectProject(id: number | null) {
-    setSelectedProjectId(id);
-    if (id === null) onClearFilter();
-    setDropdownOpen(false);
-  }
-
-  const activeCount = visibleTasks.filter((t) => t.status !== 'done').length;
+  const activeCount = tasks.filter((t) => t.status !== 'done').length;
 
   return (
     <View style={[styles.root, { width }]} pointerEvents={isFocused ? 'auto' : 'none'}>
 
       {/* Header */}
-      <View
-        style={[styles.header, { paddingTop: insets.top + spacing.xxxl }]}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-      >
+      <View style={[styles.header, { paddingTop: insets.top + spacing.xxxl }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
             <Text style={styles.backBtnText}>🏠</Text>
@@ -324,26 +273,6 @@ export function MaisonTasksPanel({ width, isFocused, focusKey, projectFilter, on
             </Text>
           </View>
         </View>
-
-        {/* Bouton dropdown projet */}
-        <TouchableOpacity
-          style={[
-            styles.dropdownBtn,
-            selectedProject && { borderColor: selectedProject.room.color + '80', backgroundColor: selectedProject.room.color + '15' },
-          ]}
-          onPress={() => setDropdownOpen((o) => !o)}
-          activeOpacity={0.75}
-        >
-          <Text
-            style={[styles.dropdownBtnText, selectedProject && { color: selectedProject.room.color }]}
-            numberOfLines={1}
-          >
-            📂 {selectedProject ? selectedProject.title : 'Tous les projets'}
-          </Text>
-          <Text style={[styles.dropdownBtnArrow, selectedProject && { color: selectedProject.room.color }]}>
-            {dropdownOpen ? '▴' : '▾'}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* Board */}
@@ -357,7 +286,7 @@ export function MaisonTasksPanel({ width, isFocused, focusKey, projectFilter, on
           contentContainerStyle={[styles.board, { paddingBottom: insets.bottom + spacing.xl }]}
         >
           {COLUMNS.map((col, colIdx) => {
-            const colTasks = visibleTasks.filter((t) => t.status === col.status);
+            const colTasks = tasks.filter((t) => t.status === col.status);
             return (
               <View
                 key={col.status}
@@ -424,74 +353,6 @@ export function MaisonTasksPanel({ width, isFocused, focusKey, projectFilter, on
         </ScrollView>
       </View>
 
-      {/* Dropdown overlay */}
-      {dropdownOpen && (
-        <>
-          <TouchableOpacity
-            style={[StyleSheet.absoluteFillObject, { top: headerHeight, zIndex: 10 }]}
-            activeOpacity={1}
-            onPress={() => setDropdownOpen(false)}
-          />
-          <View style={[styles.dropdownMenu, { top: headerHeight + 4 }]}>
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 320 }}>
-              {/* Option "Tous" */}
-              <TouchableOpacity
-                style={[styles.dropdownItem, selectedProjectId === null && styles.dropdownItemActive]}
-                onPress={() => selectProject(null)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.dropdownItemText, selectedProjectId === null && styles.dropdownItemTextActive]}>
-                  Tous les projets
-                </Text>
-                {selectedProjectId === null && <Text style={styles.dropdownCheck}>✓</Text>}
-              </TouchableOpacity>
-
-              {allProjects.length === 0 && (
-                <View style={styles.dropdownEmpty}>
-                  <Text style={styles.dropdownEmptyText}>Aucun projet créé</Text>
-                </View>
-              )}
-
-              {/* Groupes par pièce */}
-              {roomGroups.map(({ room, projects }) => (
-                <View key={room.id}>
-                  <View style={styles.dropdownGroupHeader}>
-                    <Text style={[styles.dropdownGroupText, { color: room.color }]}>
-                      {room.icon} {room.name}
-                    </Text>
-                  </View>
-                  {projects.map((project) => (
-                    <TouchableOpacity
-                      key={project.id}
-                      style={[
-                        styles.dropdownItem,
-                        styles.dropdownItemIndented,
-                        selectedProjectId === project.id && styles.dropdownItemActive,
-                      ]}
-                      onPress={() => selectProject(project.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownItemText,
-                          selectedProjectId === project.id && { color: room.color, fontWeight: typography.fontWeights.bold },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {project.title}
-                      </Text>
-                      {selectedProjectId === project.id && (
-                        <Text style={[styles.dropdownCheck, { color: room.color }]}>✓</Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        </>
-      )}
-
       {/* Détail tâche */}
       {selectedTask && (
         <TaskDetailModal
@@ -547,93 +408,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.65)',
     marginTop: 2,
   },
-
-  dropdownBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 1,
-  },
-  dropdownBtnText: {
-    flex: 1,
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.semiBold,
-    color: colors.surface,
-  },
-  dropdownBtnArrow: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: typography.fontWeights.bold,
-  },
-
-  dropdownMenu: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    zIndex: 11,
-    ...shadows.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  dropdownItemIndented: {
-    paddingLeft: spacing.xl + spacing.md,
-  },
-  dropdownItemActive: {
-    backgroundColor: colors.background,
-  },
-  dropdownItemText: {
-    flex: 1,
-    fontSize: typography.fontSizes.sm,
-    color: colors.textPrimary,
-    fontWeight: typography.fontWeights.medium,
-  },
-  dropdownItemTextActive: {
-    fontWeight: typography.fontWeights.bold,
-    color: colors.textPrimary,
-  },
-  dropdownCheck: {
-    fontSize: 14,
-    color: colors.success,
-    fontWeight: typography.fontWeights.bold,
-  },
-  dropdownGroupHeader: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  dropdownGroupText: {
-    fontSize: typography.fontSizes.xs,
-    fontWeight: typography.fontWeights.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  dropdownEmpty: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  dropdownEmptyText: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-
   boardContainer: { flex: 1 },
   board: {
     paddingHorizontal: spacing.lg,

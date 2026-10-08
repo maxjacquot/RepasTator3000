@@ -41,10 +41,9 @@ test('modification simultanée : le second est prévenu (409) avec la version ga
   assert.deepEqual(JSON.parse(corps.valeur), [{ id: 1 }]);
 });
 
-test('sport : personnel à chaque utilisateur', async () => {
-  assert.equal((await ecrire('max', 'cuisinator_sport_sessions', [{ date: '2026-10-08' }], 0)).status, 200);
-  assert.equal((await lire('copine')).cles.cuisinator_sport_sessions, undefined);
-  assert.ok((await lire('max')).cles.cuisinator_sport_sessions);
+test('sport et projets retirés : clés refusées', async () => {
+  assert.equal((await ecrire('max', 'cuisinator_sport_sessions', [], 0)).status, 404);
+  assert.equal((await ecrire('max', 'cuisinator_room_projects', [], 0)).status, 404);
 });
 
 test('clé inconnue ou valeur invalide : refusée', async () => {

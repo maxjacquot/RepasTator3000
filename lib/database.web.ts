@@ -6,7 +6,7 @@ import { stockage } from './stockage.web';
 export type { ImportResult };
 
 // ─── Re-exports des types ──────────────────────────────────────
-export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomProject, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem, SportSession } from './types';
+export type { StepType, RecipeStep, Recipe, Ingredient, ShoppingItem, MealSlot, MealKey, MealPlan, Room, RoomTask, RoomTaskType, RoomTaskStatus, RoomTaskPriority, RoomShoppingItem } from './types';
 export { DEFAULT_PEOPLE, mealKeyOf } from './types';
 
 // ─── Init ─────────────────────────────────────────────────────
@@ -210,11 +210,10 @@ export function updateShoppingItemName(id: number, name: string): void {
 
 // ─── Maison ───────────────────────────────────────────────────
 
-import type { Room, RoomProject, RoomTask, RoomTaskStatus, RoomShoppingItem } from './types';
+import type { Room, RoomTask, RoomTaskStatus, RoomShoppingItem } from './types';
 
 const ROOMS_KEY = 'cuisinator_rooms';
 const ROOM_TASKS_KEY = 'cuisinator_room_tasks';
-const PROJECTS_KEY = 'cuisinator_room_projects';
 
 const SEED_ROOMS: Omit<Room, 'id'>[] = [
   { name: 'Salon',          icon: '🛋️', color: '#7B68EE' },
@@ -286,7 +285,6 @@ export function updateRoom(id: number, room: Omit<Room, 'id'>): void {
 export function deleteRoom(id: number): void {
   saveRooms(loadRooms().filter((r) => r.id !== id));
   saveRoomTasks(loadRoomTasks().filter((t) => t.room_id !== id));
-  saveProjects(loadProjects().filter((p) => p.room_id !== id));
 }
 
 export function getRoomTasks(roomId: number): RoomTask[] {
@@ -300,7 +298,7 @@ export function getRoomTaskCounts(roomId: number): { total: number; done: number
 
 export function addRoomTask(task: Omit<RoomTask, 'id'>): void {
   const tasks = loadRoomTasks();
-  saveRoomTasks([...tasks, { ...task, project_id: task.project_id ?? null, shopping_items: task.shopping_items ?? '[]', id: nextTaskId(tasks) }]);
+  saveRoomTasks([...tasks, { ...task, shopping_items: task.shopping_items ?? '[]', id: nextTaskId(tasks) }]);
 }
 
 export function updateRoomTaskStatus(id: number, status: RoomTaskStatus): void {
@@ -319,50 +317,6 @@ export function deleteRoomTask(id: number): void {
   saveRoomTasks(loadRoomTasks().filter((t) => t.id !== id));
 }
 
-// ─── Projets ─────────────────────────────────────────────────
-
-function loadProjects(): RoomProject[] {
-  try {
-    const raw = stockage.getItem(PROJECTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveProjects(projects: RoomProject[]): void {
-  stockage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-}
-
-function nextProjectId(projects: RoomProject[]): number {
-  return projects.length === 0 ? 1 : Math.max(...projects.map((p) => p.id)) + 1;
-}
-
-export function getProjects(roomId: number): RoomProject[] {
-  return loadProjects().filter((p) => p.room_id === roomId).sort((a, b) => a.created_at.localeCompare(b.created_at));
-}
-
-export function addProject(project: Omit<RoomProject, 'id'>): void {
-  const projects = loadProjects();
-  saveProjects([...projects, { ...project, id: nextProjectId(projects) }]);
-}
-
-export function updateProject(id: number, updates: { title: string; description: string }): void {
-  saveProjects(loadProjects().map((p) => p.id === id ? { ...p, ...updates } : p));
-}
-
-export function deleteProject(id: number): void {
-  saveProjects(loadProjects().filter((p) => p.id !== id));
-  saveRoomTasks(loadRoomTasks().filter((t) => t.project_id !== id));
-}
-
-export function getProjectTasks(projectId: number): RoomTask[] {
-  return loadRoomTasks().filter((t) => t.project_id === projectId).sort((a, b) => a.created_at.localeCompare(b.created_at));
-}
-
-export function getProjectTaskCounts(projectId: number): { total: number; done: number } {
-  const tasks = loadRoomTasks().filter((t) => t.project_id === projectId);
-  return { total: tasks.length, done: tasks.filter((t) => t.status === 'done').length };
-}
-
 export type RoomShoppingEntry = {
   roomId: number;
   roomName: string;
@@ -372,37 +326,6 @@ export type RoomShoppingEntry = {
   taskTitle: string;
   items: RoomShoppingItem[];
 };
-
-// ─── Sport ────────────────────────────────────────────────────
-
-import type { SportSession } from './types';
-
-const SPORT_SESSIONS_KEY = 'cuisinator_sport_sessions';
-
-function loadSportSessions(): SportSession[] {
-  try {
-    const raw = stockage.getItem(SPORT_SESSIONS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveSportSessions(sessions: SportSession[]): void {
-  stockage.setItem(SPORT_SESSIONS_KEY, JSON.stringify(sessions));
-}
-
-export function getSportSession(date: string): SportSession | null {
-  return loadSportSessions().find((s) => s.date === date) ?? null;
-}
-
-export function setSportSession(session: SportSession): void {
-  const sessions = loadSportSessions().filter((s) => s.date !== session.date);
-  sessions.push(session);
-  saveSportSessions(sessions);
-}
-
-export function getAllSportSessions(): SportSession[] {
-  return loadSportSessions().sort((a, b) => b.date.localeCompare(a.date));
-}
 
 export function getAllRoomShoppingItems(): RoomShoppingEntry[] {
   const rooms = loadRooms();

@@ -5,7 +5,7 @@
 // - garde l'historique des 50 dernières versions de chaque clé (pour réparer une erreur).
 //
 // Connexion : par le portail mjacquot.fr (Caddy transmet X-Utilisateur). En local : « dev ».
-// Données partagées par le foyer (recettes, planning, courses, maison) ; le sport est personnel.
+// Toutes les données sont partagées par le foyer (recettes, planning, courses, maison).
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { readFile } from 'node:fs/promises';
@@ -25,9 +25,7 @@ const CLES_FOYER = [
   'cuisinator_shopping',
   'cuisinator_rooms',
   'cuisinator_room_tasks',
-  'cuisinator_room_projects',
 ];
-const CLES_PERSO = ['cuisinator_sport_sessions'];
 
 mkdirSync(DOSSIER_DONNEES, { recursive: true });
 const db = new DatabaseSync(path.join(DOSSIER_DONNEES, 'maisontator.sqlite'));
@@ -54,7 +52,7 @@ const purger = db.prepare(`
   DELETE FROM historique WHERE espace = ? AND cle = ? AND id NOT IN (
     SELECT id FROM historique WHERE espace = ? AND cle = ? ORDER BY id DESC LIMIT ${HISTORIQUE})`);
 
-const espaceDe = (cle, utilisateur) => (CLES_FOYER.includes(cle) ? 'foyer' : CLES_PERSO.includes(cle) ? `perso:${utilisateur}` : null);
+const espaceDe = (cle) => (CLES_FOYER.includes(cle) ? 'foyer' : null);
 
 function utilisateurDe(req) {
   return req.headers['x-utilisateur'] || (PRODUCTION ? null : 'dev');
@@ -125,15 +123,15 @@ async function router(req, res) {
 
   if (route === '/api/donnees' && req.method === 'GET') {
     const cles = {};
-    for (const espace of ['foyer', `perso:${utilisateur}`]) {
-      for (const { cle, valeur, version } of lireToutes.all(espace)) cles[cle] = { valeur, version };
+    for (const { cle, valeur, version } of lireToutes.all('foyer')) {
+      if (CLES_FOYER.includes(cle)) cles[cle] = { valeur, version };
     }
     return json(res, 200, { utilisateur, cles });
   }
 
   const m = /^\/api\/donnees\/([\w-]+)$/.exec(route);
   if (m && req.method === 'PUT') {
-    const espace = espaceDe(m[1], utilisateur);
+    const espace = espaceDe(m[1]);
     if (!espace) return json(res, 404, { erreur: 'Clé inconnue.' });
     const { valeur, version } = await lireJson(req);
     if (typeof valeur !== 'string' || !Number.isInteger(version)) return json(res, 400, { erreur: 'Requête invalide.' });

@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
+  Share,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAllRecipes, type Recipe } from '../database';
 import { colors, fonts, typography, spacing, radii, shadows, Badge } from '../theme';
 import { ImportModal } from '../ImportModal';
+import { useAppAlert } from '../AppAlert';
+import { exportRecipesJson } from '../data/exportRecipes';
 import { searchRecipes } from '../recipeSearch';
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -94,10 +98,26 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Toutes');
   const [importVisible, setImportVisible] = useState(false);
+  const { showAlert, AlertComponent } = useAppAlert();
 
   useEffect(() => {
     if (isFocused) setRecipes(getAllRecipes());
   }, [isFocused, focusKey]);
+
+  // Copie toutes les recettes au format de l'import (pour les passer du téléphone à la version web)
+  async function handleExport() {
+    const all = getAllRecipes();
+    const json = exportRecipesJson(all);
+    await Clipboard.setStringAsync(json);
+    showAlert({
+      title: 'Recettes copiées',
+      message: `${all.length} recette(s) copiée(s) dans le presse-papier. Colle-les dans « Importer » sur la version web, ou partage-les.`,
+      buttons: [
+        { text: 'Partager', onPress: () => { Share.share({ message: json }); } },
+        { text: 'OK' },
+      ],
+    });
+  }
 
   const filtered = searchRecipes(recipes, search).filter(
     ({ recipe }) => activeCategory === 'Toutes' || recipe.category === activeCategory
@@ -109,6 +129,13 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
       <View style={[s.header, { paddingTop: insets.top + spacing.xl }]}>
         <Text style={s.headerTitle}>Mes recettes</Text>
         <View style={s.headerBtns}>
+          <TouchableOpacity
+            style={s.importBtn}
+            onPress={handleExport}
+            activeOpacity={0.7}
+          >
+            <Text style={s.importBtnText}>Exporter</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={s.importBtn}
             onPress={() => setImportVisible(true)}
@@ -171,6 +198,7 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
         )}
       />
 
+      {AlertComponent}
     </View>
   );
 }

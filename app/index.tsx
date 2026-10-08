@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-nativ
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, typography, spacing, radii, shadows } from '../lib/theme';
+import LienMesOutils from '../lib/LienMesOutils';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function HomeScreen() {
 
         {/* Header terracotta avec courbe en bas */}
         <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+          <LienMesOutils />
           <Text style={styles.appName}>MAISONTATOR 3000</Text>
           <Text style={styles.question}>De quoi veux-tu{'\n'}t'occuper ?</Text>
           <View style={styles.headerAccentDot} />
@@ -53,7 +55,6 @@ export default function HomeScreen() {
             </View>
             <Text style={[styles.chevron, { color: colors.house }]}>›</Text>
           </TouchableOpacity>
-
         </View>
 
       </View>

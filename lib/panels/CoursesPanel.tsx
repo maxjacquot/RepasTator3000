@@ -23,6 +23,7 @@ import type { ShoppingItem } from '../database';
 import { colors, fonts, typography, spacing, radii, shadows } from '../theme';
 import { useAppAlert } from '../AppAlert';
 import { aggregateShoppingItems, type ShoppingRow } from '../shoppingAggregate';
+import BoutonOutils from '../BoutonOutils';
 
 // ─── Rayons supermarché ───────────────────────────────────────
 
@@ -320,18 +321,22 @@ export function CoursesPanel({ width, isFocused, focusKey }: CoursesPanelProps) 
     <View style={[s.root, { width }]} pointerEvents={isFocused ? 'auto' : 'none'}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + spacing.xl }]}>
-        <View style={s.headerTop}>
-          <View>
-            <Text style={s.headerTitle}>🛒 Courses</Text>
+        {/* bouton des applications collé au titre (sans l'écart « gap » de l'en-tête) */}
+        <View>
+          <BoutonOutils />
+          <View style={s.headerTop}>
+            <View>
+              <Text style={s.headerTitle}>🛒 Courses</Text>
+              {items.length > 0 && (
+                <Text style={s.headerSub}>{doneCount}/{items.length} dans le panier</Text>
+              )}
+            </View>
             {items.length > 0 && (
-              <Text style={s.headerSub}>{doneCount}/{items.length} dans le panier</Text>
+              <TouchableOpacity style={s.clearBtn} onPress={handleClearAll} activeOpacity={0.7}>
+                <Text style={s.clearBtnText}>✓ J'ai fait les courses</Text>
+              </TouchableOpacity>
             )}
           </View>
-          {items.length > 0 && (
-            <TouchableOpacity style={s.clearBtn} onPress={handleClearAll} activeOpacity={0.7}>
-              <Text style={s.clearBtnText}>✓ J'ai fait les courses</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         {items.length > 0 && (

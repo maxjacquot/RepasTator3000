@@ -17,6 +17,7 @@ import { ImportModal } from '../ImportModal';
 import { useAppAlert } from '../AppAlert';
 import { exportRecipesJson } from '../data/exportRecipes';
 import { searchRecipes } from '../recipeSearch';
+import BoutonOutils from '../BoutonOutils';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -127,22 +128,25 @@ export function RecipesPanel({ width, isFocused, focusKey }: RecipesPanelProps) 
     <View style={[s.root, { width }]} pointerEvents={isFocused ? 'auto' : 'none'}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + spacing.xl }]}>
-        <Text style={s.headerTitle}>Mes recettes</Text>
-        <View style={s.headerBtns}>
-          <TouchableOpacity
-            style={s.importBtn}
-            onPress={handleExport}
-            activeOpacity={0.7}
-          >
-            <Text style={s.importBtnText}>Exporter</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.importBtn}
-            onPress={() => setImportVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={s.importBtnText}>Importer</Text>
-          </TouchableOpacity>
+        <BoutonOutils />
+        <View style={s.headerRow}>
+          <Text style={s.headerTitle}>Mes recettes</Text>
+          <View style={s.headerBtns}>
+            <TouchableOpacity
+              style={s.importBtn}
+              onPress={handleExport}
+              activeOpacity={0.7}
+            >
+              <Text style={s.importBtnText}>Exporter</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.importBtn}
+              onPress={() => setImportVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={s.importBtnText}>Importer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -214,11 +218,13 @@ const s = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxxxl,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
   },
   headerTitle: {
     fontSize: 28,

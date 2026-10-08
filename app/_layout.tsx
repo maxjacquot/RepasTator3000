@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { initDatabase } from '../lib/database';
 import { colors } from '../lib/theme';
 import SyncGate from '../lib/SyncGate';
+import BoutonOutils from '../lib/BoutonOutils';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,7 +34,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="recipe/[id]" options={{ title: 'Recette' }} />
+        <Stack.Screen name="recipe/[id]" options={{ title: 'Recette', headerRight: () => <BoutonOutils style={null} /> }} />
       </Stack>
     </SyncGate>
   );

@@ -544,9 +544,11 @@ function PlanningPanel({ width, isFocused, focusKey }: PlanningPanelProps) {
             bounces={false}
             getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
             keyExtractor={(item) => item.dateStr}
-            onMomentumScrollEnd={(e) => {
+            // onScroll plutôt que onMomentumScrollEnd : ce dernier n'est pas déclenché sur le web
+            scrollEventThrottle={16}
+            onScroll={(e) => {
               const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-              setCurrentDayIdx(idx);
+              setCurrentDayIdx((prev) => (prev === idx ? prev : idx));
             }}
             renderItem={({ item, index }) => (
               <DayPage

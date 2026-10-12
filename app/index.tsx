@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
   StatusBar,
@@ -337,7 +338,12 @@ interface DayPageProps {
 
 function DayPage({ day, width, height, isToday, router, onClearMeal, onAddMeal }: DayPageProps) {
   return (
-    <View style={[styles.page, { width, height }]}>
+    // ScrollView à hauteur fixe : centré si tout tient, sinon on peut défiler (petit écran, accompagnements)
+    <ScrollView
+      style={{ width, height }}
+      contentContainerStyle={styles.page}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.dayLabelBlock}>
         <Text style={[styles.dayMain, isToday && styles.dayMainToday]}>{day.label.main}</Text>
         <Text style={styles.daySub}>{day.label.sub}</Text>
@@ -379,7 +385,7 @@ function DayPage({ day, width, height, isToday, router, onClearMeal, onAddMeal }
           onAddSide2={() => onAddMeal(day.dateStr, 'dinner_side2')}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -767,6 +773,7 @@ const styles = StyleSheet.create({
 
   // Page d'un jour
   page: {
+    flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,

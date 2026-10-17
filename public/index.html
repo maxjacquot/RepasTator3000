@@ -1,34 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>%WEB_TITLE%</title>
-    <!-- Appli installable (« Ajouter à l'écran d'accueil ») : manifeste et icônes dans public/ -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#C74B2B" />
-    <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="RepasTator" />
-    <!-- Reset de react-native-web : https://necolas.github.io/react-native-web/docs/setup/#root-element -->
-    <style id="expo-reset">
-      html,
-      body {
-        height: 100%;
-      }
-      body {
-        overflow: hidden;
-      }
-      #root {
-        display: flex;
-        height: 100%;
-        flex: 1;
-      }
-    </style>
-  </head>
-
-  <body>
-    <noscript>Activez JavaScript pour utiliser cette appli.</noscript>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RepasTator</title>
+  <!-- Appli installable (« Ajouter à l'écran d'accueil ») : manifeste et icônes servis sans connexion -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#C74B2B">
+  <link rel="apple-touch-icon" href="/icones/apple-touch-icon.png">
+  <link rel="icon" href="/icones/icone-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="RepasTator">
+  <!-- Style commun de mjacquot.fr (Sandstone), puis celui de l'appli -->
+  <link rel="stylesheet" href="https://mjacquot.fr/charte.css">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/js/app.js" type="module"></script>
+  <script src="https://mjacquot.fr/volet-outils.js" defer></script>
+</head>
+<body>
+  <div id="app"></div>
+  <noscript>Activez JavaScript pour utiliser RepasTator.</noscript>
+</body>
 </html>

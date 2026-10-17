@@ -1,17 +1,5 @@
-import type { RecipeStep, Ingredient } from '../types';
-
-export type SeedRecipe = {
-  title: string;
-  category: string;
-  prep_time: number;
-  cook_time: number;
-  description: string;
-  ingredients: Ingredient[];
-  steps: RecipeStep[];
-  tags: string[];
-};
-
-export const SEED_RECIPES: SeedRecipe[] = [
+// Recettes de départ : mises dans une base vide (première ouverture). Reprises de l'ancienne appli Expo.
+export const RECETTES_DEPART = [] = [
   {
     title: "Falafels maison au air fryer & sauce yaourt ail-citron",
     category: "Plat",
@@ -78,8 +66,8 @@ export const SEED_RECIPES: SeedRecipe[] = [
   },
 ];
 
-/** Convertit une SeedRecipe en format DB (ingrédients en string, steps en JSON) */
-export function toDbFormat(r: SeedRecipe): Omit<import('../types').Recipe, 'id'> {
+/** Recette de départ → format rangé sur le serveur (ingrédients, étapes et tags en JSON). */
+export function versFormatStocke(r) {
   return {
     title: r.title,
     category: r.category,

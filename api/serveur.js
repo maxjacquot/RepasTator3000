@@ -1,5 +1,5 @@
 // Back de la version web de RepasTator (repas.mjacquot.fr).
-// - sert l'appli web (export Expo, dossier dist/) ;
+// - sert l'appli web (fichiers de public/ : HTML, CSS, modules JavaScript, sans étape de construction) ;
 // - stocke les données dans SQLite (node:sqlite, sans dépendance) : une ligne par clé, en JSON,
 //   avec un numéro de version (deux personnes qui modifient la même chose : le second est prévenu) ;
 // - garde l'historique des 50 dernières versions de chaque clé (pour réparer une erreur).
@@ -17,7 +17,7 @@ import path from 'node:path';
 const PORT = Number(process.env.PORT ?? 3000);
 const PRODUCTION = process.env.NODE_ENV === 'production';
 const DOSSIER_DONNEES = process.env.DOSSIER_DONNEES ?? path.resolve('donnees-locales');
-const DIST = path.resolve(import.meta.dirname, '../dist');
+const PUBLIC = path.resolve(import.meta.dirname, '../public');
 const TAILLE_MAX = 5 * 1024 * 1024;
 const HISTORIQUE = 50;
 
@@ -94,18 +94,18 @@ export function enregistrer(espace, cle, valeur, versionConnue, utilisateur) {
   }
 }
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 
 async function fichierStatique(res, route) {
-  const chemin = path.normalize(path.join(DIST, decodeURIComponent(route)));
-  if (!chemin.startsWith(DIST)) return false;
+  const chemin = path.normalize(path.join(PUBLIC, decodeURIComponent(route)));
+  if (!chemin.startsWith(PUBLIC + path.sep)) return false;
   try {
     const contenu = await readFile(chemin);
     const ext = path.extname(chemin);
     res.writeHead(200, {
       'Content-Type': TYPES[ext] ?? 'application/octet-stream',
-      // Les fichiers d'Expo ont une empreinte dans leur nom : cache long. index.html : jamais en cache.
-      'Cache-Control': route.startsWith('/_expo/') || route.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : 'no-cache',
+      // Polices : cache long (elles ne changent pas). Le reste : revalidé à chaque fois (mise à jour immédiate).
+      'Cache-Control': route.startsWith('/polices/') ? 'public, max-age=31536000, immutable' : 'no-cache',
     });
     res.end(contenu);
     return true;
@@ -148,7 +148,7 @@ async function router(req, res) {
 
   if (route.startsWith('/api/')) return json(res, 404, { erreur: 'Introuvable.' });
 
-  // Appli web : fichier existant, sinon index.html (les routes /planning, /recipe/3… sont gérées par l'appli)
+  // Appli web : fichier existant, sinon index.html (les adresses /recettes, /recette/3… sont gérées par la page)
   if (req.method === 'GET' && route !== '/' && (await fichierStatique(res, route))) return;
   if (req.method === 'GET' && (await fichierStatique(res, '/index.html'))) return;
   json(res, 404, { erreur: 'Introuvable.' });

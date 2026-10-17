@@ -30,11 +30,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npx tsc --noEmit
+      # Aucune dépendance : tests des calculs de la page et de l'API
       - run: npm test
-        working-directory: api
+      # Chaque module de la page se lit sans erreur de syntaxe
+      - run: for f in public/js/*.js; do node --check "$f"; done
 
   deployer:
     needs: tests

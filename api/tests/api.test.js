@@ -53,3 +53,19 @@ test('clé inconnue ou valeur invalide : refusée', async () => {
   const r = await fetch(`${base}/api/donnees/cuisinator_shopping`, { method: 'PUT', headers: en('max'), body: JSON.stringify({ valeur: 'pas du json', version: 0 }) });
   assert.equal(r.status, 400);
 });
+
+test('site : page, modules et adresses de l\'appli servis ; rien hors de public/', async () => {
+  const page = await fetch(`${base}/recette/3`, { headers: en('max') });
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /<script src="\/js\/app\.js" type="module">/);
+  const js = await fetch(`${base}/js/app.js`, { headers: en('max') });
+  assert.match(js.headers.get('content-type'), /^text\/javascript/);
+  const css = await fetch(`${base}/style.css`, { headers: en('max') });
+  assert.match(css.headers.get('content-type'), /^text\/css/);
+  assert.doesNotMatch(await (await fetch(`${base}/..%2fapi%2fserveur.js`, { headers: en('max') })).text(), /createServer/);
+});
+
+test('appli installable : manifeste et icônes sans connexion', async () => {
+  assert.equal((await fetch(`${base}/manifest.webmanifest`)).status, 200);
+  assert.equal((await fetch(`${base}/icones/icone-192.png`)).status, 200);
+});

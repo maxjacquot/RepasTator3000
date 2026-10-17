@@ -1,19 +1,10 @@
-# Version web de RepasTator : export web de l'appli Expo + back (api/), sur repas.mjacquot.fr.
-
-# --- Étape 1 : export web de l'appli Expo ---
-FROM node:24 AS web
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npx expo export -p web --output-dir dist
-
-# --- Étape 2 : le back sert l'appli web et l'API (aucune dépendance npm) ---
+# RepasTator (repas.mjacquot.fr) : le back (api/) sert le site (public/) et les données. Aucune dépendance npm,
+# aucune étape de construction : les fichiers de public/ sont servis tels quels.
 FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY api/package.json api/serveur.js ./api/
-COPY --from=web /app/dist ./dist
+COPY public ./public
 # Ne pas tourner en root dans le conteneur
 USER node
 EXPOSE 3000

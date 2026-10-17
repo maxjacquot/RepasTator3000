@@ -35,6 +35,7 @@ button.sur-entete {
   text-transform: none; letter-spacing: normal; font-size: 0.9rem; font-weight: 700; white-space: nowrap;
 }
 button.sur-entete:hover:not(:disabled) { background: rgb(255 255 255 / 0.3); }
+.entete-courses button.sur-entete { margin-left: auto; } /* à droite, même quand il passe à la ligne sur téléphone */
 .entete-planning { padding-bottom: 22px; }
 .compte-repas { padding: 4px 12px; border-radius: 999px; background: rgb(255 255 255 / 0.18); color: #fff; font-weight: 700; font-size: 0.85rem; }
 .compte-repas.actif { background: rgb(255 255 255 / 0.92); color: var(--accent); }

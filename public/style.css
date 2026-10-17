@@ -21,7 +21,7 @@ button { -webkit-user-select: none; user-select: none; }
 
 /* Boutons « à plat » de l'appli : pas les petites majuscules des boutons du style commun */
 .plat, .ajouter-plat, .retirer, .carte-recette, .filtre, .creneau, .article, .coche, .rond, .type, .categorie, .tag,
-.bascule-vue button, .supprimer-groupe, .supprimer-recette, .ajouter-ligne, .bandeau, .bouton-ia, .fermer, .retour {
+.bascule-vue button, .supprimer-groupe, .supprimer-article, .supprimer-recette, .ajouter-ligne, .bandeau, .bouton-ia, .fermer, .retour {
   text-transform: none; letter-spacing: normal; font-weight: inherit; font-size: 1rem; line-height: 1.3; gap: 0;
 }
 
@@ -237,7 +237,14 @@ button.article {
   width: 100%; justify-content: flex-start; gap: 12px; text-align: left; padding: 10px 2px;
   background: none; border: 0; border-top: 1px solid var(--bord); border-radius: 0; color: var(--texte);
 }
-.groupe-articles button.article:first-child { border-top: 0; }
+.ligne-article { display: flex; align-items: center; border-top: 1px solid var(--bord); }
+.groupe-articles .ligne-article:first-child { border-top: 0; }
+.ligne-article button.article { flex: 1; min-width: 0; border-top: 0; }
+button.supprimer-article {
+  flex-shrink: 0; width: 40px; height: 40px; padding: 0; justify-content: center;
+  background: none; border: 0; border-radius: 999px; color: var(--doux); font-size: 1rem; text-transform: none;
+}
+button.supprimer-article:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 10%, white); color: var(--danger); }
 button.article:hover:not(:disabled) { background: var(--gris); }
 .case { flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--bord); color: #fff; font-size: 0.85rem; font-weight: 700; }
 .article.fait .case { background: var(--vert); border-color: var(--vert); }

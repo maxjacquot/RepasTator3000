@@ -12,15 +12,21 @@ export function ecranCourses(nav) {
   const faits = articles.filter((a) => a.done === 1).length;
   const groupes = vue === 'recette' ? groupesParRecette(articles) : groupesParRayon(articles);
 
-  const ligne = (l) => el('button', {
-    type: 'button', class: `article ${l.fait ? 'fait' : ''}`, 'aria-pressed': String(l.fait),
-    onclick: () => { D.cocher(l.ids, !l.fait); nav.redessiner(); },
-  },
-  el('span', { class: 'case', 'aria-hidden': 'true' }, l.fait ? '✓' : ''),
-  el('span', { class: 'article-corps' },
-    el('span', { class: 'article-nom' }, l.nom),
-    vue === 'rayon' && l.recettes.length ? el('span', { class: 'article-recettes' }, l.recettes.join(' · ')) : null),
-  l.quantite ? el('span', { class: 'article-qte' }, l.quantite) : l.ids.length > 1 ? el('span', { class: 'article-qte' }, `×${l.ids.length}`) : null);
+  const ligne = (l) => el('div', { class: `ligne-article ${l.fait ? 'fait' : ''}` },
+    el('button', {
+      type: 'button', class: `article ${l.fait ? 'fait' : ''}`, 'aria-pressed': String(l.fait),
+      onclick: () => { D.cocher(l.ids, !l.fait); nav.redessiner(); },
+    },
+    el('span', { class: 'case', 'aria-hidden': 'true' }, l.fait ? '✓' : ''),
+    el('span', { class: 'article-corps' },
+      el('span', { class: 'article-nom' }, l.nom),
+      vue === 'rayon' && l.recettes.length ? el('span', { class: 'article-recettes' }, l.recettes.join(' · ')) : null),
+    l.quantite ? el('span', { class: 'article-qte' }, l.quantite) : l.ids.length > 1 ? el('span', { class: 'article-qte' }, `×${l.ids.length}`) : null),
+    // Retire l'article de la liste (tous ses doublons s'il est additionné)
+    el('button', {
+      type: 'button', class: 'supprimer-article', title: 'Retirer de la liste', 'aria-label': `Retirer « ${l.nom} » de la liste`,
+      onclick: () => { D.supprimerArticles(l.ids); nav.redessiner(); },
+    }, '✕'));
 
   const groupe = (g) => {
     const toutFait = g.lignes.every((l) => l.fait);

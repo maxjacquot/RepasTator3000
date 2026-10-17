@@ -391,7 +391,7 @@ export function CoursesPanel({ width, isFocused, focusKey }: CoursesPanelProps) 
                       onPress={() => handleDeleteGroup(group.rows)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="trash-outline" size={14} color="#DC2626" />
+                      <Ionicons name="trash-outline" size={14} color={colors.danger} />
                       <Text style={s.groupDeleteText}>Supprimer</Text>
                     </TouchableOpacity>
                   ) : (
@@ -509,8 +509,8 @@ const s = StyleSheet.create({
     paddingBottom: spacing.xxxxl,
     paddingHorizontal: spacing.xl,
     gap: spacing.lg,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   headerTop: {
     flexDirection: 'row',
@@ -605,7 +605,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radii.full,
@@ -613,7 +613,7 @@ const s = StyleSheet.create({
   groupDeleteText: {
     fontSize: typography.fontSizes.xs,
     fontWeight: typography.fontWeights.bold,
-    color: '#DC2626',
+    color: colors.danger,
   },
   groupItems: { paddingVertical: spacing.xs },
   item: {

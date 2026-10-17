@@ -17,16 +17,20 @@ export const fonts = {
 
 // ─── Couleurs ────────────────────────────────────────────────
 export const colors = {
-  primary: '#C74B2B',       // Terracotta — CTA, boutons
-  dark: '#1A1208',          // Espresso brun — header, titres
-  background: '#FAF6F0',    // Crème chaude — fond général
+  // Style commun de mjacquot.fr : neutres du thème Sandstone (Bootswatch), couleur de l'appli gardée.
+  // Même palette que https://mjacquot.fr/charte.css (voir portail/docs/decisions.md P06).
+  primary: '#C74B2B',       // Terracotta — CTA, boutons (couleur de l'appli)
+  dark: '#3E3F3A',          // Sandstone « dark » — header, titres
+  background: '#F8F5F0',    // Sandstone « light » — fond général
   surface: '#FFFFFF',       // Blanc pur — cartes
   success: '#4A7C59',       // Vert forêt — badges, étapes
-  textPrimary: '#1A1208',
-  textSecondary: '#9A7E6E', // Taupe chaud
-  border: '#EDE5D8',
+  textPrimary: '#3E3F3A',
+  textSecondary: '#6E6F6B', // Gris chaud (texte secondaire Sandstone)
+  border: '#DFD7CA',        // Sandstone gray-300
   primaryLight: '#FAEEE9',  // Terracotta très clair — fond emoji
   successLight: '#EBF3EE',  // Vert très clair — fond emoji alternatif
+  danger: '#D9534F',        // Sandstone « danger » — supprimer, erreurs
+  dangerLight: '#FBEAEA',   // fond des boutons « Supprimer »
 } as const;
 
 // ─── Typographie ─────────────────────────────────────────────
@@ -68,25 +72,26 @@ export const spacing = {
 
 // ─── Border Radius ────────────────────────────────────────────
 export const radii = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 28,
+  // Coins peu arrondis, comme Sandstone (0,375 rem = 6 px)
+  sm: 6,
+  md: 8,
+  lg: 10,
+  xl: 12,
+  xxl: 16,
   full: 999,
 } as const;
 
 // ─── Ombres ───────────────────────────────────────────────────
 export const shadows = {
   sm: {
-    shadowColor: '#1A1208',
+    shadowColor: '#3E3F3A',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
-    shadowColor: '#1A1208',
+    shadowColor: '#3E3F3A',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -128,7 +133,7 @@ const badgeStyles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.sm + 2,
     paddingVertical: 3,
-    borderRadius: radii.full,
+    borderRadius: radii.sm,
   },
   text: {
     fontSize: typography.fontSizes.xs,

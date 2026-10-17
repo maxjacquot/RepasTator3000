@@ -146,7 +146,7 @@ const s = StyleSheet.create({
   iconBadge: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -157,7 +157,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   iconBadgeRed: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
   },
   iconText: {
     fontSize: 22,
@@ -222,7 +222,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   btnDestructive: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
   },
   btnText: {
     fontSize: typography.fontSizes.md,
@@ -243,7 +243,7 @@ const s = StyleSheet.create({
     color: colors.textSecondary,
   },
   btnTextDestructive: {
-    color: '#DC2626',
+    color: colors.danger,
     fontWeight: typography.fontWeights.bold,
   },
 });

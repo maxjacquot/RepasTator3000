@@ -287,14 +287,14 @@ const s = StyleSheet.create({
     color: colors.surface,
   },
   errorBox: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     borderRadius: radii.md,
     padding: spacing.md,
     gap: spacing.xs,
     marginBottom: spacing.md,
   },
   errorText: {
-    color: '#DC2626',
+    color: colors.danger,
     fontSize: typography.fontSizes.sm,
   },
 });

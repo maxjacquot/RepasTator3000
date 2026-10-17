@@ -506,8 +506,8 @@ const s = StyleSheet.create({
     gap: spacing.sm,
   },
   error: {
-    color: '#DC2626',
-    backgroundColor: '#FEE2E2',
+    color: colors.danger,
+    backgroundColor: colors.dangerLight,
     borderRadius: radii.md,
     padding: spacing.md,
     fontSize: typography.fontSizes.sm,
@@ -646,14 +646,14 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   removeBtnText: {
     fontSize: 13,
-    color: '#DC2626',
+    color: colors.danger,
     fontWeight: typography.fontWeights.bold,
   },
   addRowBtn: {

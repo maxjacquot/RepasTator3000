@@ -52,7 +52,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const STEP_CONFIG: Record<string, { emoji: string; color: string; bg: string; label: string }> = {
   prep: { emoji: '🔪', color: '#FF6B35', bg: '#FFF0EA', label: 'Préparation' },
-  cook: { emoji: '🔥', color: '#E53E3E', bg: '#FFF5F5', label: 'Cuisson' },
+  cook: { emoji: '🔥', color: colors.danger, bg: colors.dangerLight, label: 'Cuisson' },
   wait: { emoji: '❄️', color: '#805AD5', bg: '#FAF5FF', label: 'Frigo' },
   rest: { emoji: '⏸️', color: '#38A169', bg: '#F0FFF4', label: 'Repos' },
 };
@@ -649,7 +649,7 @@ export default function RecipeScreen() {
                 <Text style={styles.timeText}>🔪 {prepOnly} min de prépa</Text>
               </View>
               <View style={[styles.timeBadge, styles.timeBadgeCook]}>
-                <Text style={[styles.timeText, { color: '#E53E3E' }]}>🔥 {recipe.cook_time} min de cuisson</Text>
+                <Text style={[styles.timeText, { color: colors.danger }]}>🔥 {recipe.cook_time} min de cuisson</Text>
               </View>
             </>
           ) : (
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   timeBadgePrep: { borderColor: '#FF6B35', backgroundColor: '#FFF0EA' },
-  timeBadgeCook: { borderColor: '#E53E3E', backgroundColor: '#FFF5F5' },
+  timeBadgeCook: { borderColor: colors.danger, backgroundColor: colors.dangerLight },
   timeText: { color: colors.textSecondary, fontWeight: typography.fontWeights.semiBold, fontSize: typography.fontSizes.sm },
   title: { fontSize: 30, fontFamily: fonts.display, color: colors.textPrimary, marginBottom: spacing.lg, lineHeight: 38 },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xl },
@@ -823,10 +823,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: radii.md,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     alignItems: 'center',
   },
-  deleteBtnText: { color: '#DC2626', fontWeight: typography.fontWeights.bold, fontSize: typography.fontSizes.md },
+  deleteBtnText: { color: colors.danger, fontWeight: typography.fontWeights.bold, fontSize: typography.fontSizes.md },
 });
 
 // ─── Styles frise chronologique ───────────────────────────────
@@ -1090,9 +1090,9 @@ const editS = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteRowBtnText: { color: '#DC2626', fontSize: 9, fontWeight: typography.fontWeights.bold, lineHeight: 11 },
+  deleteRowBtnText: { color: colors.danger, fontSize: 9, fontWeight: typography.fontWeights.bold, lineHeight: 11 },
 });

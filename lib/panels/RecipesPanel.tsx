@@ -218,8 +218,8 @@ const s = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxxxl,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -359,7 +359,7 @@ const s = StyleSheet.create({
     color: colors.border,
   },
   cardMetaCook: {
-    color: '#E53E3E',
+    color: colors.danger,
   },
   badge: { alignSelf: 'flex-start' },
 });

@@ -692,8 +692,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxxxl,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   headerTop: {
     flexDirection: 'row',
@@ -872,14 +872,14 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   clearBtnText: {
     fontSize: 13,
-    color: '#DC2626',
+    color: colors.danger,
     fontWeight: typography.fontWeights.bold,
   },
 
@@ -1072,7 +1072,7 @@ const picker = StyleSheet.create({
     color: colors.border,
   },
   itemMetaCook: {
-    color: '#E53E3E',
+    color: colors.danger,
   },
   badge: {
     alignSelf: 'flex-start',

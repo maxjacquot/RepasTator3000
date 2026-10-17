@@ -93,6 +93,8 @@ type Recipe = {
 
 ## Design system (`lib/theme.tsx`)
 
+- **Depuis le 2026-10-17 : neutres du style commun Sandstone** de mjacquot.fr (`portail/docs/decisions.md` P06) : fond `#F8F5F0`, texte et en-têtes `#3E3F3A`, texte secondaire `#6E6F6B`, bords `#DFD7CA`, rouge `colors.danger` `#D9534F` (+ `dangerLight`), coins moins arrondis (`radii` de 6 à 16), en-têtes droits (plus d'arrondi en bas). Terracotta et Playfair gardés (identité de l'appli). Pas de rouge écrit en dur : `colors.danger`.
+
 - Couleur principale: orange `#FF6B35`
 - Fond sombre: anthracite `#1D1D1B`
 - Espacement: échelle 8px (xs=4 → xxxxl=48)

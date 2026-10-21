@@ -290,6 +290,10 @@ dialog.fenetre.feuille { width: min(600px, 100vw); height: min(860px, 100dvh); m
 .creneaux { display: flex; gap: 8px; }
 button.creneau { flex: 1; background: var(--gris); border: 1px solid var(--bord); color: var(--texte); padding: 10px; }
 button.creneau.actif { background: var(--accent-pale); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+button.creneau { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.creneau-deja { font-size: 0.8rem; font-weight: 400; color: var(--doux); max-width: 100%; overflow-wrap: anywhere; line-height: 1.25; }
+button.creneau.occupe .creneau-deja { color: var(--texte); font-weight: 600; }
+button.creneau.actif.occupe .creneau-deja { color: var(--accent); font-style: italic; }
 .personnes { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--bord); }
 .personnes-libelle { color: var(--doux); }
 .compteur { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }

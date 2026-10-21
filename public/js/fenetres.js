@@ -108,8 +108,12 @@ export function fenetrePlanning(recette, preselection) {
   const jours = septJours();
   const choix = {};
   const personnes = {};
+  const deja = {}; // plats déjà prévus par une autre recette, affichés sous chaque créneau
   for (const { date } of jours) {
     const j = D.jour(date);
+    deja[date] = Object.fromEntries(REPAS.map(({ cle }) => [cle, j[cle] && j[cle] !== recette.id
+      ? [j[cle], j[`${cle}_side`], j[`${cle}_side2`]].map((id) => id && D.recette(id)?.title).filter(Boolean).join(' + ') || null
+      : null]));
     choix[date] = { lunch: j.lunch === recette.id, dinner: j.dinner === recette.id };
     personnes[date] = { lunch: j.lunch_people, dinner: j.dinner_people };
   }
@@ -129,10 +133,13 @@ export function fenetrePlanning(recette, preselection) {
         el('div', { class: 'jour-planning-nom' }, court),
         el('div', { class: 'creneaux' }, REPAS.map((r) => el('button', {
           type: 'button',
-          class: `creneau ${choix[date][r.cle] ? 'actif' : ''}`,
+          class: `creneau ${choix[date][r.cle] ? 'actif' : ''} ${deja[date][r.cle] ? 'occupe' : ''}`,
           'aria-pressed': String(choix[date][r.cle]),
           onclick: () => { choix[date][r.cle] = !choix[date][r.cle]; dessiner(); },
-        }, `${r.icone}  ${r.nom}`))),
+        }, el('span', {}, `${r.icone}  ${r.nom}`),
+        el('span', { class: 'creneau-deja' }, deja[date][r.cle]
+          ? (choix[date][r.cle] ? `Remplace : ${deja[date][r.cle]}` : deja[date][r.cle])
+          : 'Libre')))),
         REPAS.filter((r) => choix[date][r.cle]).map((r) => choixPersonnes(`${r.icone}  ${r.nom}`, personnes[date][r.cle], (v) => { personnes[date][r.cle] = v; })),
       )));
       majValider();
@@ -155,7 +162,7 @@ export function fenetrePlanning(recette, preselection) {
     });
     dessiner();
     return [
-      el('p', { class: 'aide' }, 'Sélectionne les créneaux où tu veux cuisiner cette recette, puis indique pour combien de personnes.'),
+      el('p', { class: 'aide' }, 'Sélectionne les créneaux où tu veux cuisiner cette recette, puis indique pour combien de personnes. Sous chaque créneau : ce qui est déjà prévu.'),
       liste,
       el('div', { class: 'pied-fenetre' }, valider),
     ];
